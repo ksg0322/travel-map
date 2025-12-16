@@ -9,4 +9,216 @@
   height: 100%;
 }
 
+/* InfoWindow 스타일 */
+.info-window-content {
+  padding: 8px;
+  max-width: 300px;
+  max-height: 500px;
+  overflow-y: auto;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
 
+.info-title {
+  margin: 0 0 6px 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: #202124;
+  line-height: 1.3;
+}
+
+.info-address {
+  margin: 0 0 8px 0;
+  font-size: 12px;
+  color: #5f6368;
+  line-height: 1.4;
+}
+
+.info-details {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 8px;
+  font-size: 13px;
+}
+
+.info-rating {
+  color: #1967d2;
+  font-weight: 500;
+}
+
+.info-price {
+  color: #34a853;
+  font-weight: 500;
+  font-size: 12px;
+}
+
+.info-type {
+  color: #3c4043;
+  background-color: #f1f3f4;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 11px;
+}
+
+.info-phone {
+  margin: 6px 0;
+  font-size: 12px;
+  color: #5f6368;
+}
+
+.info-phone a {
+  color: #1a73e8;
+  text-decoration: none;
+}
+
+.info-phone a:hover {
+  text-decoration: underline;
+}
+
+.info-hours {
+  margin: 8px 0;
+  padding: 8px 0;
+  border-top: 1px solid #e8eaed;
+  border-bottom: 1px solid #e8eaed;
+}
+
+.info-open-now {
+  margin: 0 0 6px 0;
+  font-size: 13px;
+  font-weight: 500;
+  color: #202124;
+}
+
+.info-weekday {
+  margin: 0;
+}
+
+.info-weekday-item {
+  margin: 2px 0;
+  font-size: 11px;
+  color: #5f6368;
+  line-height: 1.4;
+}
+
+.info-weekday-more {
+  margin: 2px 0;
+  font-size: 11px;
+  color: #9aa0a6;
+  font-style: italic;
+}
+
+.info-reviews {
+  margin: 8px 0;
+  padding: 8px 0;
+  border-top: 1px solid #e8eaed;
+}
+
+.info-reviews-title {
+  margin: 0 0 6px 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: #202124;
+}
+
+.info-review-item {
+  margin-bottom: 8px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #f1f3f4;
+}
+
+.info-review-item:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+  padding-bottom: 0;
+}
+
+.info-review-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+.info-review-author {
+  font-size: 11px;
+  font-weight: 500;
+  color: #5f6368;
+}
+
+.info-review-rating {
+  font-size: 11px;
+  color: #1967d2;
+  font-weight: 500;
+}
+
+.info-review-text {
+  margin: 0;
+  font-size: 11px;
+  color: #3c4043;
+  line-height: 1.4;
+}
+
+.info-types {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin: 8px 0;
+}
+
+.info-type-tag {
+  background-color: #e8f0fe;
+  color: #1967d2;
+  padding: 2px 6px;
+  border-radius: 12px;
+  font-size: 10px;
+  text-transform: capitalize;
+}
+
+.info-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid #e8eaed;
+}
+
+.info-link {
+  display: inline-block;
+  color: #1a73e8;
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.info-link:hover {
+  text-decoration: underline;
+}
+
+/* Google Maps 컨트롤 z-index 조정 (AI 채팅 창보다 위에 표시) */
+.gm-bundled-control,
+.gm-style-cc,
+.gmnoprint {
+  z-index: 1001 !important; /* AI 채팅 창(z-index: 1000)보다 위에 표시 */
+}
+
+/* Google Maps 확대/축소 컨트롤 */
+.gm-control-active,
+.gm-fullscreen-control,
+div[role="button"][title*="Zoom"] {
+  z-index: 1001 !important;
+}
+
+/* 채팅창이 열렸을 때 Google Maps 확대/축소 컨트롤을 좌측으로 이동 */
+.map-wrapper.chat-open .gm-bundled-control,
+.map-wrapper.chat-open .gm-style-cc {
+  transform: translateX(380px) !important; /* 채팅창 너비(350px)만큼 좌측으로 이동 */
+  transition: transform 0.3s ease !important; /* 애니메이션 효과 */
+}
+
+/* Google Maps 확대/축소 버튼 컨테이너 */
+.map-wrapper.chat-open .gmnoprint[style*="right"],
+.map-wrapper.chat-open div[role="button"][title*="Zoom"] {
+  transform: translateX(350px) !important;
+  transition: transform 0.3s ease !important;
+}

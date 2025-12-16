@@ -1,15 +1,81 @@
+import { useState, useEffect, useRef } from 'react'
+import { useTranslation } from 'react-i18next'
 import './SearchResults.css'
 
-const SearchResults = ({ results, onSelectPlace }) => {
+const SearchResults = ({ results, onSelectPlace, onClear }) => {
+  const [isCollapsed, setIsCollapsed] = useState(false)
+  const prevResultsRef = useRef(null)
+  const { t } = useTranslation()
+
+  // 새로운 검색 결과가 생기면 검색결과창을 열기
+  useEffect(() => {
+    // results가 있고 길이가 0보다 큰 경우
+    if (results && results.length > 0) {
+      // 이전 결과와 비교하여 새로운 검색 결과인지 확인
+      const prevResults = prevResultsRef.current
+      
+      // 이전 결과가 없었거나, 결과 ID 목록이 다른 경우 (새로운 검색)
+      if (!prevResults || prevResults.length === 0) {
+        setIsCollapsed(false)
+      } else {
+        // 결과의 ID를 비교하여 변경되었는지 확인
+        const prevIds = prevResults.map(r => r.id).join(',')
+        const currentIds = results.map(r => r.id).join(',')
+        if (prevIds !== currentIds) {
+          setIsCollapsed(false)
+        }
+      }
+      
+      // 현재 결과를 저장
+      prevResultsRef.current = [...results]
+    } else {
+      prevResultsRef.current = null
+    }
+  }, [results])
+
+  const handleClear = (e) => {
+    e.stopPropagation() // 헤더 클릭 이벤트 전파 방지
+    if (onClear) {
+      onClear()
+    }
+  }
+
   if (!results || results.length === 0) {
     return null
   }
 
   return (
-    <div className="search-results-container">
-      <div className="search-results-header">
-        <h3>검색 결과 ({results.length})</h3>
+    <div className={`search-results-container ${isCollapsed ? 'collapsed' : ''}`}>
+      <div className="search-results-header" onClick={() => setIsCollapsed(!isCollapsed)}>
+        <h3>{t('search.results')} ({results.length})</h3>
+        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+          {onClear && (
+            <button 
+              className="clear-results-button"
+              onClick={handleClear}
+              title={t('search.clearResults')}
+              style={{
+                background: 'none',
+                border: 'none',
+                fontSize: '18px',
+                cursor: 'pointer',
+                padding: '4px 8px',
+                borderRadius: '4px',
+                color: '#5f6368',
+                transition: 'background-color 0.2s'
+              }}
+              onMouseOver={(e) => e.target.style.backgroundColor = '#f1f3f4'}
+              onMouseOut={(e) => e.target.style.backgroundColor = 'transparent'}
+            >
+              ✕
+            </button>
+          )}
+          <button className="collapse-button">
+            {isCollapsed ? '▼' : '▲'}
+          </button>
+        </div>
       </div>
+      {!isCollapsed && (
       <div className="search-results-list">
         {results.map((place, index) => (
           <div
@@ -18,7 +84,7 @@ const SearchResults = ({ results, onSelectPlace }) => {
             onClick={() => onSelectPlace && onSelectPlace(place)}
           >
             <div className="result-name">
-              {place.displayName?.text || '이름 없음'}
+              {place.displayName?.text || place.displayName || '이름 없음'}
             </div>
             {place.formattedAddress && (
               <div className="result-address">
@@ -36,9 +102,9 @@ const SearchResults = ({ results, onSelectPlace }) => {
           </div>
         ))}
       </div>
+      )}
     </div>
   )
 }
 
 export default SearchResults
-

@@ -1,0 +1,69 @@
+{
+  "app": {
+    "title": "Travel Map",
+    "loading": "加载中...",
+    "saveSuccess": "地点已保存。",
+    "alreadySaved": "此地点已保存。",
+    "saveError": "没有可保存的地点信息。",
+    "removeConfirm": "确定要删除此地点吗？",
+    "noResults": "未找到搜索结果。",
+    "searchError": "搜索过程中发生错误。",
+    "locationError": "无法获取位置信息。",
+    "noLocationBrowser": "此浏览器不支持位置服务。"
+  },
+  "location": {
+    "moveToCurrent": "移至当前位置",
+    "notSupported": "此浏览器不支持位置服务。",
+    "error": {
+      "denied": "位置权限被拒绝。",
+      "unavailable": "无法使用位置信息。",
+      "timeout": "位置请求超时。",
+      "unknown": "发生了未知错误。"
+    }
+  },
+  "sidebar": {
+    "settings": "设置",
+    "language": "语言",
+    "radius": "搜索半径",
+    "minRating": "最低评分",
+    "unit": "m",
+    "savedPlaces": "已保存地点",
+    "noSavedPlaces": "没有已保存的地点。"
+  },
+  "search": {
+    "placeholder": "搜索地点 (例如: 餐馆, 酒店, 景点)",
+    "searching": "搜索中...",
+    "categories": {
+      "all": "全部",
+      "hotel": "酒店",
+      "restaurant": "餐馆",
+      "tourist attraction": "旅游景点"
+    },
+    "results": "搜索结果",
+    "clearResults": "清除搜索结果"
+  },
+  "chat": {
+    "title": "AI 聊天",
+    "placeholder": "输入消息...",
+    "close": "关闭",
+    "clear": "清除",
+    "clearConfirm": "确定要清除所有对话历史吗？",
+    "welcome": "请询问有关旅行的问题！\n保存地点以获取旅行计划帮助。",
+    "hint": "询问当前搜索到的 {{count}} 个地点。",
+    "error": "抱歉，发生了临时错误。请稍后再试。"
+  },
+  "place": {
+    "save": "保存",
+    "saved": "已保存",
+    "reviews": "评论",
+    "reviewCount": "条评论",
+    "openNow": "营业中",
+    "closed": "已关闭",
+    "address": "地址",
+    "phone": "电话",
+    "website": "网站"
+  },
+  "route": {
+    "clearRoute": "清除路线"
+  }
+}

@@ -12,18 +12,41 @@
   overflow: hidden;
 }
 
-.map-container {
+.main-content {
   flex: 1;
-  margin-left: 64px;
   position: relative;
   height: 100vh;
-  width: calc(100% - 64px);
+  overflow: hidden;
+}
+
+.map-container {
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+
+/* Top Controls Container */
+.top-controls-container {
+  position: absolute;
+  top: 16px;
+  left: 20px;
+  right: 20px;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  pointer-events: none; /* Allows clicking on map behind empty spaces */
+}
+
+/* Make children clickable */
+.top-controls-container > * {
+  pointer-events: auto;
 }
 
 .current-location-button {
   position: absolute;
-  bottom: 100px;
-  right: 20px;
+  bottom: 30px;
+  right: 70px;
   width: 48px;
   height: 48px;
   background: white;
@@ -34,9 +57,15 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 1000;
+  z-index: 1001; /* AI 채팅 창(z-index: 1000)보다 위에 표시 */
   color: #4285F4;
-  transition: all 0.2s;
+  transition: all 0.3s ease; /* 채팅창 열림/닫힘 애니메이션과 일치 */
+  font-size: 24px;
+}
+
+/* 채팅창이 열렸을 때 현재 위치 버튼을 좌측으로 이동 */
+.current-location-button.chat-open {
+  right: 220px; /* 기본 right(70px) + 채팅창 너비(350px) */
 }
 
 .current-location-button:hover:not(:disabled) {
@@ -52,7 +81,7 @@
 .location-error-message {
   position: absolute;
   top: 80px;
-  left: 80px;
+  left: 20px;
   background: #fff3cd;
   border: 1px solid #ffc107;
   border-radius: 8px;
@@ -85,26 +114,167 @@
   justify-content: center;
 }
 
-.location-error-message button:hover {
-  color: #533f03;
+/* Category Filter Chips */
+.category-filter {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.filter-btn {
+  padding: 8px 16px;
+  background: white;
+  border: 1px solid #dadce0;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #3c4043;
+  cursor: pointer;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  transition: all 0.2s;
+  height: 40px; /* Match search bar height approx */
+  display: flex;
+  align-items: center;
+}
+
+.filter-btn:hover {
+  background: #f8f9fa;
+}
+
+.filter-btn.active {
+  background: #e8f0fe;
+  color: #1967d2;
+  border-color: #1967d2;
+}
+
+/* Database View Overlay */
+.database-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 3000;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 40px;
+}
+
+.database-panel {
+  background: white;
+  width: 90%;
+  max-width: 1200px;
+  height: 90%;
+  border-radius: 16px;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.2);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.database-header {
+  padding: 20px 24px;
+  border-bottom: 1px solid #e8eaed;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.database-header h3 {
+  margin: 0;
+  font-size: 20px;
+}
+
+.close-button {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: #5f6368;
+}
+
+.database-content {
+  flex: 1;
+  overflow: auto;
+  padding: 20px;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th, td {
+  padding: 12px;
+  text-align: left;
+  border-bottom: 1px solid #e8eaed;
+}
+
+th {
+  font-weight: 600;
+  color: #5f6368;
+  background: #f8f9fa;
+  position: sticky;
+  top: 0;
+}
+
+tr:hover {
+  background: #f8f9fa;
+}
+
+.type-badge {
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.type-badge.hotel { background: #e8f0fe; color: #1967d2; }
+.type-badge.restaurant { background: #e6f4ea; color: #137333; }
+.type-badge.tourist_attraction { background: #fef7e0; color: #b06000; }
+
+.remove-button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 18px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+}
+
+.remove-button:hover {
+  background-color: #f1f3f4;
 }
 
 @media (max-width: 768px) {
-  .map-container {
-    margin-left: 56px;
-    width: calc(100% - 56px);
+  .top-controls-container {
+    flex-direction: column;
+    align-items: flex-start;
+    pointer-events: none;
   }
 
-  .current-location-button {
-    bottom: 80px;
-    right: 16px;
-    width: 44px;
-    height: 44px;
+  .top-controls-container > * {
+    pointer-events: auto;
+    width: 100%;
   }
 
-  .location-error-message {
-    left: 16px;
-    top: 70px;
-    max-width: calc(100% - 80px);
+  .category-filter {
+    overflow-x: auto;
+    padding-bottom: 4px;
+    width: 100%;
+  }
+  
+  .filter-btn {
+    white-space: nowrap;
+    padding: 6px 12px;
+    font-size: 12px;
+    height: 36px;
+  }
+
+  .database-overlay {
+    padding: 10px;
   }
 }

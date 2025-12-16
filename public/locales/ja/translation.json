@@ -1,0 +1,69 @@
+{
+  "app": {
+    "title": "Travel Map",
+    "loading": "読み込み中...",
+    "saveSuccess": "場所が保存されました。",
+    "alreadySaved": "すでに保存された場所です。",
+    "saveError": "保存する場所情報がありません。",
+    "removeConfirm": "この場所を削除しますか？",
+    "noResults": "検索結果がありません。",
+    "searchError": "検索中にエラーが発生しました。",
+    "locationError": "位置情報を取得できません。",
+    "noLocationBrowser": "このブラウザは位置情報サービスをサポートしていません。"
+  },
+  "location": {
+    "moveToCurrent": "現在地に移動",
+    "notSupported": "このブラウザは位置情報サービスをサポートしていません。",
+    "error": {
+      "denied": "位置情報の権限が拒否されました。",
+      "unavailable": "位置情報を利用できません。",
+      "timeout": "位置情報の要求がタイムアウトしました。",
+      "unknown": "不明なエラーが発生しました。"
+    }
+  },
+  "sidebar": {
+    "settings": "設定",
+    "language": "言語",
+    "radius": "検索半径",
+    "minRating": "最低評価",
+    "unit": "m",
+    "savedPlaces": "保存された場所",
+    "noSavedPlaces": "保存された場所がありません。"
+  },
+  "search": {
+    "placeholder": "場所検索 (例: レストラン, ホテル, 観光地)",
+    "searching": "検索中...",
+    "categories": {
+      "all": "すべて",
+      "hotel": "ホテル",
+      "restaurant": "レストラン",
+      "tourist attraction": "観光地"
+    },
+    "results": "検索結果",
+    "clearResults": "検索結果をクリア"
+  },
+  "chat": {
+    "title": "AIチャット",
+    "placeholder": "メッセージを入力...",
+    "close": "閉じる",
+    "clear": "履歴削除",
+    "clearConfirm": "会話履歴をすべて削除しますか？",
+    "welcome": "旅行に関する質問をしてみてください！\n場所を保存すると、旅行計画のお手伝いをします。",
+    "hint": "現在検索された{{count}}件の場所について聞いてください。",
+    "error": "申し訳ありません。一時的なエラーが発生しました。しばらくしてからもう一度お試しください。"
+  },
+  "place": {
+    "save": "保存",
+    "saved": "保存済み",
+    "reviews": "レビュー",
+    "reviewCount": "件のレビュー",
+    "openNow": "営業中",
+    "closed": "営業終了",
+    "address": "住所",
+    "phone": "電話番号",
+    "website": "ウェブサイト"
+  },
+  "route": {
+    "clearRoute": "ルートをクリア"
+  }
+}

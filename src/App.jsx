@@ -1,79 +1,294 @@
 import { useState, useEffect } from 'react'
 import { APIProvider } from '@vis.gl/react-google-maps'
+import { useTranslation } from 'react-i18next'
 import './App.css'
 import SearchBar from './components/SearchBar'
 import Sidebar from './components/Sidebar'
-import ChatPopup from './components/ChatPopup'
-import Map from './components/Map'
+import ChatPopup from './components/AIChat'
+import GoogleMap from './components/Map'
 import SearchResults from './components/SearchResults'
-import { searchPlaces } from './services/placesApi'
+import PlaceDetailModal from './components/PlaceDetailModal'
+import { searchLocationCoordinates, searchCategoryPlaces, searchPlaces, getPlaceDetails, geocodeAddress, reverseGeocode } from './services/placesApi'
+
+// 데이터베이스 뷰 컴포넌트 (표 형태)
+const DatabaseView = ({ results, onClose, onRemove }) => {
+  const { t } = useTranslation()
+  return (
+    <div className="database-overlay">
+      <div className="database-panel">
+        <div className="database-header">
+          <h3>{t('sidebar.savedPlaces')} ({results.length})</h3>
+          <button onClick={onClose} className="close-button">✕</button>
+        </div>
+        <div className="database-content">
+          {results.length === 0 ? (
+            <div style={{ padding: '40px', textAlign: 'center', color: '#5f6368' }}>
+              {t('sidebar.noSavedPlaces')}
+            </div>
+          ) : (
+            <table>
+              <thead>
+                <tr>
+                  <th>Type</th>
+                  <th>Name</th>
+                  <th>Rating</th>
+                  <th>Reviews</th>
+                  <th>Address</th>
+                  <th>Website</th>
+                  {onRemove && <th>Actions</th>}
+                </tr>
+              </thead>
+              <tbody>
+                {results.map((place, index) => (
+                  <tr key={place.id || index}>
+                    <td>
+                      <span className={`type-badge ${place.type?.toLowerCase()}`}>
+                        {place.type === 'Hotel' ? '🏨' : 
+                         place.type === 'Restaurant' ? '🍴' : 
+                         place.type === 'Tourist attraction' ? '⭐' : '📍'} {place.type}
+                      </span>
+                    </td>
+                    <td>{place.displayName?.text || place.displayName}</td>
+                    <td>{place.rating ? `⭐ ${place.rating}` : '-'}</td>
+                    <td>{place.userRatingCount || 0}</td>
+                    <td>{place.formattedAddress}</td>
+                    <td>
+                      {place.websiteUri ? (
+                        <a href={place.websiteUri} target="_blank" rel="noopener noreferrer">Link</a>
+                      ) : '-'}
+                    </td>
+                    {onRemove && (
+                      <td>
+                        <button 
+                          onClick={() => {
+                            if (window.confirm(t('place.deleteConfirm'))) {
+                              onRemove(place.id)
+                            }
+                          }}
+                          className="remove-button"
+                          title={t('place.delete')}
+                        >
+                          🗑️
+                        </button>
+                      </td>
+                    )}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
 
 function App() {
+  const { t, i18n } = useTranslation()
   const [isChatOpen, setIsChatOpen] = useState(false)
-  const [language, setLanguage] = useState('ko')
+  const [isDatabaseOpen, setIsDatabaseOpen] = useState(false)
+  const [language, setLanguage] = useState(i18n.language || 'ko')
   const [searchResults, setSearchResults] = useState([])
   const [currentLocation, setCurrentLocation] = useState(null)
+  const [mapCenter, setMapCenter] = useState(null) // 지도 중심 좌표 상태 추가
+  const [selectedPlace, setSelectedPlace] = useState(null) // 선택된 장소 상태 추가
+  const [routePaths, setRoutePaths] = useState([]) // 여행 경로 데이터 (polyline 배열)
+  // 사용자가 저장한 장소 목록 (localStorage 연동)
+  const [savedPlaces, setSavedPlaces] = useState(() => {
+    try {
+      const saved = localStorage.getItem('savedPlaces')
+      return saved ? JSON.parse(saved) : []
+    } catch (e) {
+      console.error('저장된 장소 로드 실패:', e)
+      return []
+    }
+  }) 
   const [locationError, setLocationError] = useState(null)
   const [isGettingLocation, setIsGettingLocation] = useState(false)
+  const [minRating, setMinRating] = useState(4.0)
+  const [radius, setRadius] = useState(3000)
+  const [selectedCategory, setSelectedCategory] = useState('All')   
   const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || ''
+
+  // 저장된 장소가 변경될 때마다 localStorage에 저장
+  useEffect(() => {
+    try {
+      localStorage.setItem('savedPlaces', JSON.stringify(savedPlaces))
+    } catch (e) {
+      console.error('장소 저장 실패:', e)
+    }
+  }, [savedPlaces])
+
+  useEffect(() => {
+    // 초기 언어 설정
+    document.documentElement.lang = language
+    
+    // i18next 언어 변경 이벤트 리스너
+    const handleLanguageChanged = (lng) => {
+      document.documentElement.lang = lng
+    }
+    
+    i18n.on('languageChanged', handleLanguageChanged)
+    
+    return () => {
+      i18n.off('languageChanged', handleLanguageChanged)
+    }
+  }, [language, i18n])
+
+  // 언어 변경 핸들러
+  const handleLanguageChange = (lang) => {
+    if (lang === language) return;
+    
+    // 언어 설정 저장 및 i18n 변경
+    i18n.changeLanguage(lang)
+    setLanguage(lang)
+    
+    // Google Maps API 언어 설정을 완벽하게 적용하기 위해 페이지 새로고침
+    window.location.reload()
+  }
+
+  // 장소 선택 핸들러 (상세 정보 포함)
+  const handleSelectPlace = async (place) => {
+    if (!place) {
+      setSelectedPlace(null)
+      return
+    }
+
+    console.log('📍 장소 선택됨:', place)
+    
+    // 위치 정보 추출 시도
+    let lat, lng;
+    
+    if (place.location) {
+      lat = place.location.latitude || place.location.lat
+      lng = place.location.longitude || place.location.lng
+    }
+    
+    console.log('좌표 추출 결과:', { lat, lng })
+
+    if (lat && lng) {
+      // 지도 중심 상태 업데이트
+      const newCenter = { lat: Number(lat), lng: Number(lng) }
+      console.log('지도 중심 변경 요청:', newCenter)
+      setMapCenter(newCenter)
+    } else {
+      console.warn('위치 정보가 유효하지 않아 지도를 이동할 수 없습니다.')
+    }
+
+    // 장소 ID가 있으면 상세 정보 가져오기
+    if (place.id) {
+      try {
+        console.log('상세 정보 가져오는 중...', place.id)
+        const placeDetails = await getPlaceDetails(place.id, language)
+        if (placeDetails) {
+          console.log('✅ 상세 정보 로드 성공:', placeDetails)
+          // 기존 place 정보와 상세 정보를 병합
+          setSelectedPlace({ ...place, ...placeDetails })
+        } else {
+          // 상세 정보가 없으면 기본 정보 사용
+          setSelectedPlace(place)
+        }
+      } catch (error) {
+        console.error('상세 정보 가져오기 실패:', error)
+        // 에러가 발생해도 기본 정보로 표시
+        setSelectedPlace(place)
+      }
+    } else {
+      // ID가 없으면 기본 정보만 사용
+      setSelectedPlace(place)
+    }
+  }
+
+  // 경로 업데이트 핸들러 (AIChat에서 호출)
+  const handleRouteUpdate = (paths) => {
+    setRoutePaths(paths || [])
+  }
+
+  // 장소 저장 핸들러
+  const handleSavePlace = (place) => {
+    if (!place || !place.id) {
+      console.warn('저장할 장소 정보가 없습니다.')
+      return
+    }
+
+    // 이미 저장된 장소인지 확인
+    const isAlreadySaved = savedPlaces.some(saved => saved.id === place.id)
+    
+    if (isAlreadySaved) {
+      // 이미 저장된 경우 팝업 없이 반환
+      return
+    }
+
+    // 저장된 장소 목록에 추가
+    setSavedPlaces(prev => [...prev, place])
+    console.log('✅ 장소 저장됨:', place.displayName?.text || place.displayName)
+  }
+
+  // 저장된 장소 삭제 핸들러
+  const handleRemoveSavedPlace = (placeId) => {
+    setSavedPlaces(prev => prev.filter(place => place.id !== placeId))
+  }
 
   // 현재 위치 가져오기 함수
   const getCurrentLocation = () => {
     if (!navigator.geolocation) {
       console.error('Geolocation이 지원되지 않습니다.')
-      setLocationError('이 브라우저는 위치 서비스를 지원하지 않습니다.')
-      // 기본값 설정하지 않음 - 사용자가 수동으로 설정하도록
+      setLocationError(t('location.notSupported'))
       return
     }
 
     setIsGettingLocation(true)
     setLocationError(null)
+    setSelectedPlace(null) // 현재 위치로 이동할 때 선택된 장소 리셋
 
     const options = {
-      enableHighAccuracy: true, // 높은 정확도 사용
-      timeout: 15000, // 15초 타임아웃 (더 길게)
-      maximumAge: 0 // 캐시 사용 안 함
+      enableHighAccuracy: true,
+      timeout: 15000,
+      maximumAge: 0
     }
 
     navigator.geolocation.getCurrentPosition(
-      (position) => {
+      async (position) => {
         const location = {
           lat: position.coords.latitude,
           lng: position.coords.longitude,
-          accuracy: position.coords.accuracy // 정확도 정보 추가
+          accuracy: position.coords.accuracy
         }
         console.log('✅ 현재 위치 가져오기 성공:', location)
-        console.log('위치 정확도:', position.coords.accuracy, '미터')
+        
+        // Reverse Geocoding으로 주소 가져오기
+        try {
+          const addressInfo = await reverseGeocode(location.lat, location.lng, language)
+          if (addressInfo) {
+            location.address = addressInfo.formattedAddress
+            console.log('✅ 주소 변환 성공:', addressInfo.formattedAddress)
+          }
+        } catch (error) {
+          console.warn('주소 변환 실패:', error)
+        }
+        
         setCurrentLocation(location)
-        setLocationError(null)
+        setMapCenter(location) // 현재 위치를 지도 중심으로 설정
         setIsGettingLocation(false)
       },
       (error) => {
         setIsGettingLocation(false)
-        let errorMessage = '위치 정보를 가져올 수 없습니다.'
-        
+        let errorMessage = t('location.error.unknown')
         switch (error.code) {
           case error.PERMISSION_DENIED:
-            errorMessage = '위치 권한이 거부되었습니다. 브라우저 설정에서 위치 권한을 허용해주세요.'
-            console.error('❌ 위치 권한 거부')
+            errorMessage = t('location.error.denied')
             break
           case error.POSITION_UNAVAILABLE:
-            errorMessage = '위치 정보를 사용할 수 없습니다. GPS가 켜져 있는지 확인해주세요.'
-            console.error('❌ 위치 정보 사용 불가')
+            errorMessage = t('location.error.unavailable')
             break
           case error.TIMEOUT:
-            errorMessage = '위치 정보 요청 시간이 초과되었습니다. 다시 시도해주세요.'
-            console.error('❌ 위치 정보 요청 타임아웃')
+            errorMessage = t('location.error.timeout')
             break
           default:
-            errorMessage = '알 수 없는 오류가 발생했습니다.'
-            console.error('❌ 위치 정보 오류:', error)
+            errorMessage = t('location.error.unknown')
             break
         }
-        
         setLocationError(errorMessage)
-        // 실패 시 기본값 설정하지 않음 - 사용자가 수동으로 요청하도록
-        console.warn('⚠️ 위치 정보를 가져오지 못했습니다. 기본 위치(서울)를 사용합니다.')
       },
       options
     )
@@ -81,153 +296,425 @@ function App() {
 
   // 컴포넌트 마운트 시 위치 가져오기
   useEffect(() => {
-    // 초기 로드 시 위치 가져오기
-    getCurrentLocation()
-    
-    // 위치가 없으면 기본값 설정 (지도 표시용)
+    // 초기 기본 위치 (서울)
     if (!currentLocation) {
-      setCurrentLocation({ lat: 37.5665, lng: 126.9780 })
+      const defaultLoc = { lat: 37.5665, lng: 126.9780 }
+      setMapCenter(defaultLoc) // 지도 중심용
     }
   }, [])
 
-  // 검색 핸들러
+  // 두 좌표 사이의 거리 계산 (미터 단위, 하버사인 공식)
+  const calculateDistance = (lat1, lng1, lat2, lng2) => {
+    const R = 6371000 // 지구 반경 (미터)
+    const dLat = (lat2 - lat1) * Math.PI / 180
+    const dLng = (lng2 - lng1) * Math.PI / 180
+    const a = 
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+      Math.sin(dLng / 2) * Math.sin(dLng / 2)
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+    return R * c
+  }
+
+  // 검색 핸들러 (일반 검색 추가)
   const handleSearch = async (query) => {
     if (!query.trim()) {
       setSearchResults([])
       return
     }
 
-    console.log('검색 시작:', { query, currentLocation, language })
+    console.log('검색 시작:', { query, minRating, radius, language })
 
     try {
-      // 실제 GPS 위치가 있으면 사용, 없으면 기본 위치 사용
-      const isRealGPSLocation = currentLocation && 
-        !(currentLocation.lat === 37.5665 && currentLocation.lng === 126.9780)
-      const location = isRealGPSLocation ? currentLocation : { lat: 37.5665, lng: 126.9780 }
-      
-      console.log('검색에 사용할 위치:', isRealGPSLocation ? '실제 GPS 위치' : '기본 위치(서울)', location)
-      const results = await searchPlaces(query, location, language)
-      console.log('검색 결과:', results)
-      console.log('검색 결과 상세:', JSON.stringify(results, null, 2))
-      
-      // 결과 데이터 구조 확인
-      if (results.length > 0) {
-        console.log('첫 번째 결과 구조:', {
-          id: results[0].id,
-          displayName: results[0].displayName,
-          location: results[0].location,
-          locationType: typeof results[0].location,
-          locationKeys: results[0].location ? Object.keys(results[0].location) : null
-        })
+      // 카테고리 키워드 확인 
+      const categoryKeywords = {
+        '식당': true,
+        '음식점': true,
+        '맛집': true,
+        '호텔': true,
+        '숙박': true,
+        '관광지': true,
+        '관광': true,
+        '명소': true,
       }
       
-      if (results.length === 0) {
-        alert('검색 결과가 없습니다. 다른 키워드로 검색해보세요.')
+      const lowerQuery = query.trim().toLowerCase()
+      const isCategoryKeyword = categoryKeywords[lowerQuery] || 
+                                categoryKeywords[query.trim()] ||
+                                /^(식당|호텔|관광지|음식점|맛집|숙박|관광|명소|)$/i.test(query.trim())
+      
+      // 1. 목적지 좌표 찾기
+      let searchCenter = null
+      
+      // 카테고리 키워드인 경우: 사용자가 보고있는 지도의 중심(mapCenter)에서 검색
+      if (isCategoryKeyword) {
+        searchCenter = mapCenter || currentLocation // 지도 중심 우선, 없으면 현재 위치
+      } else {
+        // 일반 키워드인 경우: 검색어의 좌표를 찾고, 없으면 지도 중심 또는 현재 위치
+        const location = await searchLocationCoordinates(query)
+        if (location) {
+          searchCenter = { lat: location.latitude, lng: location.longitude }
+        } else {
+          searchCenter = mapCenter || currentLocation
+        }
+      }
+
+      if (!searchCenter) {
+        alert(t('search.error.locationNotFound'))
+        return
+      }
+
+      console.log('검색 중심 위치:', searchCenter)
+
+      // 2. 카테고리 키워드에 따라 검색 수행
+      let allPlaces = []
+      
+      if (isCategoryKeyword) {
+        // 카테고리 키워드인 경우 해당 카테고리만 검색
+        const normalizedQuery = lowerQuery
+        if (normalizedQuery === '호텔' || normalizedQuery === '숙박') {
+          const hotels = await searchCategoryPlaces('호텔', searchCenter, radius, minRating, 'Hotel', language)
+          allPlaces = hotels
+        } else if (normalizedQuery === '식당' || normalizedQuery === '음식점' || normalizedQuery === '맛집') {
+          const restaurants = await searchCategoryPlaces('맛집', searchCenter, radius, minRating, 'Restaurant', language)
+          allPlaces = restaurants
+        } else if (normalizedQuery === '관광지' || normalizedQuery === '관광' || normalizedQuery === '명소') {
+          const tourist_attractions = await searchCategoryPlaces('관광지', searchCenter, radius, minRating, 'Tourist attraction', language)
+          allPlaces = tourist_attractions
+        }
+      } else {
+        // 일반 키워드인 경우 모든 카테고리 + 일반 검색
+        const [hotels, restaurants, tourist_attractions, generalPlaces] = await Promise.all([
+          searchCategoryPlaces(`${query} 호텔`, searchCenter, radius, minRating, 'Hotel', language),
+          searchCategoryPlaces(`${query} 맛집`, searchCenter, radius, minRating, 'Restaurant', language),
+          searchCategoryPlaces(`${query} 관광지`, searchCenter, radius, minRating, 'Tourist', language),
+          searchPlaces(query, searchCenter, language, radius)
+        ])
+
+        // 일반 검색 결과 처리: 타입이 지정되지 않았으므로 API 데이터를 기반으로 추론하거나 'Place'로 설정
+        const formattedGeneralPlaces = generalPlaces
+          .filter(place => {
+            // 평점 필터링 개선: 식당/숙박 등 서비스 업종에만 엄격하게 적용
+            
+            // 1. 평점 정보가 없는 경우(지명, 시설 등)는 무조건 포함
+            if (place.rating === undefined || place.rating === null) return true;
+            
+            // 2. 주요 서비스 카테고리인지 확인
+            const types = place.types || [];
+            const isServicePlace = types.some(type => 
+              ['restaurant', 'food', 'cafe', 'bar', 'lodging', 'hotel'].includes(type)
+            );
+            
+            // 3. 서비스 업종이면 평점 기준 적용, 아니면(역, 관공서 등) 통과
+            if (isServicePlace) {
+              return place.rating >= minRating;
+            }
+            return true;
+          })
+          .map(place => {
+          let type = 'Place';
+          const types = place.types || [];
+          if (types.includes('lodging')) type = 'Hotel';
+          else if (types.includes('restaurant') || types.includes('food')) type = 'Restaurant';
+          else if (types.includes('tourist_attraction')) type = 'Tourist attraction';
+          
+          return { ...place, type };
+        });
+
+        // 일반 검색 결과를 가장 앞으로 배치하여 검색 정확도가 높은 순으로 표시
+        allPlaces = [...formattedGeneralPlaces, ...hotels, ...restaurants, ...tourist_attractions]
+      }
+
+      // 3. 결과 합치기 및 중복 제거
+      
+      // 장소 ID 기준으로 중복 제거
+      const uniquePlacesMap = new Map();
+      allPlaces.forEach(place => {
+        // 이미 있는 장소라면, 구체적인 타입(Hotel/Restaurant/Tourist attraction)을 우선함 ('Place'보다)
+        if (uniquePlacesMap.has(place.id)) {
+          const existing = uniquePlacesMap.get(place.id);
+          // 기존 항목이 'Place'이고 새 항목이 더 구체적인 타입이면 교체 (Map은 키가 있으면 순서가 바뀌지 않음)
+          if (existing.type === 'Place' && place.type !== 'Place') {
+            uniquePlacesMap.set(place.id, place);
+          }
+        } else {
+          uniquePlacesMap.set(place.id, place);
+        }
+      });
+      
+      const uniquePlaces = Array.from(uniquePlacesMap.values());
+
+      // 검색 반경 내의 장소만 필터링
+      const placesWithinRadius = uniquePlaces.filter(place => {
+        if (!place.location || !searchCenter) return false
+        
+        let placeLat, placeLng
+        if (place.location.latitude !== undefined) {
+          placeLat = place.location.latitude
+          placeLng = place.location.longitude
+        } else if (place.location.lat !== undefined) {
+          placeLat = place.location.lat
+          placeLng = place.location.lng
+        } else {
+          return false
+        }
+
+        const distance = calculateDistance(
+          searchCenter.lat,
+          searchCenter.lng,
+          placeLat,
+          placeLng
+        )
+        
+        // 거리 정보를 place 객체에 추가 (표시용)
+        place.distance = Math.round(distance)
+        
+        return distance <= radius
+      })
+
+      console.log(`검색 결과: 전체 ${uniquePlaces.length}개, 반경 내 ${placesWithinRadius.length}개`)
+
+      // 카테고리 키워드 검색일 때만 현재 지도 위치 기준으로 거리 계산 및 정렬
+      let finalResults = placesWithinRadius
+      if (isCategoryKeyword) {
+        // 카테고리 키워드 검색일 때만 거리순 정렬 적용
+        const currentCenter = mapCenter || currentLocation
+        if (currentCenter && currentCenter.lat && currentCenter.lng) {
+          // 각 장소에 현재 지도 위치 기준 거리 계산 및 저장
+          placesWithinRadius.forEach(place => {
+            if (!place.location) return
+            
+            let placeLat, placeLng
+            if (place.location.latitude !== undefined) {
+              placeLat = place.location.latitude
+              placeLng = place.location.longitude
+            } else if (place.location.lat !== undefined) {
+              placeLat = place.location.lat
+              placeLng = place.location.lng
+            } else {
+              return
+            }
+            
+            const distanceFromCenter = calculateDistance(
+              currentCenter.lat,
+              currentCenter.lng,
+              placeLat,
+              placeLng
+            )
+            
+            // 현재 지도 위치 기준 거리 저장
+            place.distanceFromCenter = Math.round(distanceFromCenter)
+          })
+          
+          // 거리순으로 정렬 (가까운 순)
+          finalResults = [...placesWithinRadius].sort((a, b) => {
+            const distanceA = a.distanceFromCenter || Infinity
+            const distanceB = b.distanceFromCenter || Infinity
+            return distanceA - distanceB
+          })
+        }
+      }
+
+      console.log('통합 검색 결과 (반경 필터링 후):', finalResults)
+      
+      if (finalResults.length === 0) {
+        alert(t('search.error.noResults', { radius: radius / 1000 }))
       }
       
-      setSearchResults(results)
+      setSearchResults(finalResults.slice(0, 30))
+      
     } catch (error) {
       console.error('검색 오류:', error)
-      alert(`검색 중 오류가 발생했습니다: ${error.message}`)
+      alert(`${t('search.error.generic')}: ${error.message}`)
       setSearchResults([])
     }
   }
 
-  // 개발 환경에서만 환경 변수 확인 (프로덕션에서는 제거)
-  useEffect(() => {
-    if (import.meta.env.DEV) {
-      console.log('🔑 Environment Variables:', {
-        hasMapsAPIKey: !!apiKey,
-        hasGeminiAPIKey: !!import.meta.env.VITE_GEMINI_API_KEY,
-        mode: import.meta.env.MODE
-      })
-    }
-  }, [apiKey])
+  // 검색 결과 삭제 핸들러
+  const handleClearSearchResults = () => {
+    setSearchResults([])
+    setSelectedPlace(null) // 선택된 장소도 초기화
+  }
+
+  // 경로 삭제 핸들러
+  const handleClearRoutePaths = () => {
+    setRoutePaths([])
+  }
+
+  // 카테고리 필터링
+  const filteredResults = selectedCategory === 'All' 
+    ? searchResults.slice(0, 30) // All 선택 시 최대 30개만 표시
+    : searchResults.filter(place => place.type === selectedCategory) // 특정 카테고리 선택 시 해당 카테고리의 모든 결과 표시
 
   if (!apiKey) {
     return (
-      <div style={{ 
-        display: 'flex', 
-        justifyContent: 'center', 
-        alignItems: 'center', 
-        height: '100vh',
-        flexDirection: 'column',
-        gap: '16px'
-      }}>
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
         <h2>⚠️ Google Maps API 키가 설정되지 않았습니다</h2>
-        <p>.env 파일에 VITE_GOOGLE_MAPS_API_KEY를 설정해주세요.</p>
       </div>
     )
   }
 
   return (
-    <APIProvider apiKey={apiKey}>
+    <APIProvider 
+      apiKey={apiKey} 
+      language={language} 
+      key={language} 
+      libraries={['geometry']}
+      onLoad={() => getCurrentLocation()} // 지도가 로드된 후 위치 가져오기 실행
+    >
       <div className="app-container">
-        {/* 좌측 사이드바 */}
+        {/* 사이드바 (설정 패널) */}
         <Sidebar 
-          onChatClick={() => setIsChatOpen(true)}
+          onChatClick={() => setIsChatOpen(!isChatOpen)}
+          onDatabaseClick={() => setIsDatabaseOpen(true)}
           language={language}
-          onLanguageChange={setLanguage}
+          onLanguageChange={handleLanguageChange}
+          minRating={minRating}
+          onMinRatingChange={setMinRating}
+          radius={radius}
+          onRadiusChange={setRadius}
+          savedCount={savedPlaces.length}
         />
 
-        {/* 메인 지도 영역 */}
-        <div className="map-container">
-          {/* 좌측 상단 검색 창 */}
-          <SearchBar language={language} onSearch={handleSearch} />
-          
-          {/* 검색 결과 목록 */}
-          {searchResults.length > 0 && (
-            <SearchResults 
-              results={searchResults}
-              onSelectPlace={(place) => {
-                // 장소 선택 시 지도 중심 이동 (Map 컴포넌트에서 처리)
-                console.log('선택된 장소:', place)
-              }}
-            />
-          )}
-          
-          {/* Google Maps 지도 */}
-          <Map 
-            language={language} 
-            searchResults={searchResults}
-            currentLocation={currentLocation}
-          />
+        {/* 메인 콘텐츠 영역 */}
+        <div 
+          className="main-content" 
+          style={{ 
+            marginLeft: '300px', 
+            marginRight: isChatOpen ? '350px' : '0',
+            width: isChatOpen ? 'calc(100% - 650px)' : 'calc(100% - 300px)',
+            transition: 'all 0.3s ease'
+          }}
+        >
+          <div className="map-container">
+            {/* 상단 컨트롤 컨테이너 (검색바 + 필터) */}
+            <div className="top-controls-container">
+              <SearchBar language={language} onSearch={handleSearch} currentLocation={mapCenter || currentLocation} />
+              
+              {/* 경로 삭제 버튼 (경로가 있을 때만 표시) */}
+              {routePaths && routePaths.length > 0 && (
+                <button
+                  onClick={handleClearRoutePaths}
+                  style={{
+                    padding: '8px 16px',
+                    backgroundColor: '#ea4335',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    fontSize: '14px',
+                    fontWeight: 'bold',
+                    marginRight: '8px',
+                    transition: 'background-color 0.2s',
+                    boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
+                  }}
+                  onMouseOver={(e) => e.target.style.backgroundColor = '#c5221f'}
+                  onMouseOut={(e) => e.target.style.backgroundColor = '#ea4335'}
+                  title={t('route.clearRoute')}
+                >
+                  🗑️ {t('route.clearRoute')}
+                </button>
+              )}
 
-          {/* 현재 위치 버튼 */}
-          <button
-            className="current-location-button"
-            onClick={getCurrentLocation}
-            disabled={isGettingLocation}
-            title="현재 위치로 이동"
-          >
-            {isGettingLocation ? (
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" strokeDasharray="31.416" strokeDashoffset="31.416">
-                  <animate attributeName="stroke-dasharray" dur="2s" values="0 31.416;15.708 15.708;0 31.416;0 31.416" repeatCount="indefinite"/>
-                  <animate attributeName="stroke-dashoffset" dur="2s" values="0;-15.708;-31.416;-31.416" repeatCount="indefinite"/>
-                </circle>
-              </svg>
-            ) : (
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M12 2C8.13 2 5 5.13 5 9C5 14.25 12 22 12 22C12 22 19 14.25 19 9C19 5.13 15.87 2 12 2ZM12 11.5C10.62 11.5 9.5 10.38 9.5 9C9.5 7.62 10.62 6.5 12 6.5C13.38 6.5 14.5 7.62 14.5 9C14.5 10.38 13.38 11.5 12 11.5Z" fill="currentColor"/>
-              </svg>
-            )}
-          </button>
-
-          {/* 위치 오류 메시지 */}
-          {locationError && (
-            <div className="location-error-message">
-              <span>{locationError}</span>
-              <button onClick={() => setLocationError(null)}>✕</button>
+              {/* 카테고리 필터 (검색바 우측) */}
+              <div className="category-filter">
+                <button 
+                  className={`filter-btn ${selectedCategory === 'All' ? 'active' : ''}`}
+                  onClick={() => setSelectedCategory('All')}
+                >
+                  {t('search.categories.all')} ({searchResults.length > 0 ? Math.min(searchResults.length, 30) : 0})
+                </button>
+                <button 
+                  className={`filter-btn ${selectedCategory === 'Hotel' ? 'active' : ''}`}
+                  onClick={() => setSelectedCategory('Hotel')}
+                >
+                  {t('search.categories.hotel')} 🏨 ({searchResults.filter(r => r.type === 'Hotel').length})
+                </button>
+                <button 
+                  className={`filter-btn ${selectedCategory === 'Restaurant' ? 'active' : ''}`}
+                  onClick={() => setSelectedCategory('Restaurant')}
+                >
+                  {t('search.categories.restaurant')} 🍴 ({searchResults.filter(r => r.type === 'Restaurant').length})
+                </button>
+                <button 
+                  className={`filter-btn ${selectedCategory === 'Tourist attraction' ? 'active' : ''}`}
+                  onClick={() => setSelectedCategory('Tourist attraction')}
+                >
+                  {t('search.categories.tourist attraction')} ⭐ ({searchResults.filter(r => r.type === 'Tourist attraction').length})
+                </button>
+              </div>
             </div>
-          )}
+            
+            {filteredResults.length > 0 && (
+              <SearchResults 
+                results={filteredResults}
+                onSelectPlace={handleSelectPlace}
+                onClear={handleClearSearchResults}
+              />
+            )}
+            
+            <GoogleMap 
+              language={language} 
+              searchResults={filteredResults}
+              currentLocation={currentLocation}
+              center={mapCenter} // 지도 중심 좌표 전달
+              selectedPlace={selectedPlace} // 선택된 장소 전달
+              onSelectPlace={handleSelectPlace} // 선택 핸들러 전달 (상세 정보 포함)
+              onCenterChange={setMapCenter} // 지도 중심이 변경될 때 상태 업데이트
+              isChatOpen={isChatOpen} // 채팅창 열림 상태 전달
+              routePaths={routePaths} // 여행 경로 데이터 전달
+            />
+
+            <button
+              className={`current-location-button ${isChatOpen ? 'chat-open' : ''}`}
+              onClick={getCurrentLocation}
+              disabled={isGettingLocation}
+              title={t('location.moveToCurrent')}
+            >
+              {isGettingLocation ? '...' : '📍'}
+            </button>
+
+            {locationError && (
+              <div className="location-error-message">
+                <span>{locationError}</span>
+                <button onClick={() => setLocationError(null)}>✕</button>
+              </div>
+            )}
+          </div>
         </div>
 
-        {/* 채팅 팝업 */}
+        {/* 채팅 패널 (우측 고정) */}
         {isChatOpen && (
           <ChatPopup 
             onClose={() => setIsChatOpen(false)}
             language={language}
+            searchResults={searchResults} // 필터링되지 않은 전체 결과를 AI에게 전달
+            currentLocation={currentLocation}
+            mapCenter={mapCenter}
+            savedPlaces={savedPlaces}
+            radius={radius}
+            minRating={minRating}
+            onSearch={handleSearch} // 검색 실행 함수 전달
+            onRouteUpdate={handleRouteUpdate} // 경로 업데이트 핸들러 전달
+          />
+        )}
+
+        {/* 데이터베이스 모달 */}
+        {isDatabaseOpen && (
+          <DatabaseView 
+            results={savedPlaces} 
+            onClose={() => setIsDatabaseOpen(false)}
+            onRemove={handleRemoveSavedPlace}
+          />
+        )}
+
+        {/* 장소 상세 정보 모달 */}
+        {selectedPlace && (
+          <PlaceDetailModal 
+            place={selectedPlace}
+            onClose={() => setSelectedPlace(null)}
+            onSave={handleSavePlace}
+            isSaved={savedPlaces.some(saved => saved.id === selectedPlace.id)}
           />
         )}
       </div>

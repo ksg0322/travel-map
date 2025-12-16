@@ -1,0 +1,69 @@
+{
+  "app": {
+    "title": "Travel Map",
+    "loading": "Loading...",
+    "saveSuccess": "Place saved successfully.",
+    "alreadySaved": "This place is already saved.",
+    "saveError": "No place information to save.",
+    "removeConfirm": "Do you want to delete this place?",
+    "noResults": "No search results found.",
+    "searchError": "An error occurred while searching.",
+    "locationError": "Could not retrieve location information.",
+    "noLocationBrowser": "This browser does not support location services."
+  },
+  "location": {
+    "moveToCurrent": "Move to Current Location",
+    "notSupported": "This browser does not support location services.",
+    "error": {
+      "denied": "Location permission denied.",
+      "unavailable": "Location information unavailable.",
+      "timeout": "Location request timed out.",
+      "unknown": "An unknown error occurred."
+    }
+  },
+  "sidebar": {
+    "settings": "Settings",
+    "language": "Language",
+    "radius": "Search Radius",
+    "minRating": "Min Rating",
+    "unit": "m",
+    "savedPlaces": "Saved Places",
+    "noSavedPlaces": "No saved places."
+  },
+  "search": {
+    "placeholder": "Search places (e.g., restaurant, hotel, tourist attraction)",
+    "searching": "Searching...",
+    "categories": {
+      "all": "All",
+      "hotel": "Hotel",
+      "restaurant": "Restaurant",
+      "tourist attraction": "tourist attraction"
+    },
+    "results": "Search Results",
+    "clearResults": "Clear Search Results"
+  },
+  "chat": {
+    "title": "AI Chat",
+    "placeholder": "Type a message...",
+    "close": "Close",
+    "clear": "Clear",
+    "clearConfirm": "Clear all conversation history?",
+    "welcome": "Ask anything about travel!\nSave places to get help with your travel plan.",
+    "hint": "Ask about the {{count}} places currently found.",
+    "error": "Sorry, a temporary error occurred. Please try again later."
+  },
+  "place": {
+    "save": "Save",
+    "saved": "Saved",
+    "reviews": "Reviews",
+    "reviewCount": "reviews",
+    "openNow": "Open Now",
+    "closed": "Closed",
+    "address": "Address",
+    "phone": "Phone",
+    "website": "Website"
+  },
+  "route": {
+    "clearRoute": "Clear Route"
+  }
+}

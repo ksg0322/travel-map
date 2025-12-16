@@ -1,10 +1,9 @@
 .search-results-container {
   position: absolute;
-  top: 80px;
-  left: 80px;
+  top: 120px;
+  left: 25px;
   z-index: 999;
-  width: calc(100% - 100px);
-  max-width: 400px;
+  width: 350px;
   background: white;
   border-radius: 8px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
@@ -12,12 +11,21 @@
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  transition: max-height 0.3s ease;
+}
+
+.search-results-container.collapsed {
+  max-height: 48px; /* 헤더 높이만큼만 */
 }
 
 .search-results-header {
   padding: 12px 16px;
   border-bottom: 1px solid #e8eaed;
   background: #f8f9fa;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
 }
 
 .search-results-header h3 {
@@ -25,6 +33,15 @@
   font-size: 14px;
   font-weight: 500;
   color: #202124;
+}
+
+.collapse-button {
+  background: none;
+  border: none;
+  font-size: 12px;
+  color: #5f6368;
+  cursor: pointer;
+  padding: 4px;
 }
 
 .search-results-list {
@@ -73,9 +90,15 @@
 
 @media (max-width: 768px) {
   .search-results-container {
-    left: 16px;
-    width: calc(100% - 80px);
-    max-width: none;
+    left: 0;
+    bottom: 0;
+    top: auto;
+    width: 100%;
+    border-radius: 16px 16px 0 0;
+    max-height: 40vh;
+  }
+  
+  .search-results-container.collapsed {
+    max-height: 48px;
   }
 }
-

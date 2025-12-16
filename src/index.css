@@ -27,3 +27,20 @@ body {
   width: 100%;
   height: 100%;
 }
+
+/* Google Maps 확대/축소 컨트롤이 AI 채팅 창 위에 표시되도록 z-index 조정 */
+.gm-bundled-control,
+.gm-style-cc,
+.gm-control-active,
+.gm-fullscreen-control,
+div[role="button"][title*="Zoom"],
+.gmnoprint[role="button"] {
+  z-index: 1001 !important; /* AI 채팅 창(z-index: 1000)보다 위에 표시 */
+}
+
+/* 채팅창이 열렸을 때 Google Maps 컨트롤을 좌측으로 이동 */
+.map-wrapper.chat-open .gm-bundled-control,
+.map-wrapper.chat-open .gmnoprint {
+  transform: translateX(-500px) !important; /* 채팅창 너비(500px)만큼 좌측으로 이동 */
+  transition: transform 0.3s ease !important;
+}
