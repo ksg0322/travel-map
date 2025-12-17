@@ -1,0 +1,267 @@
+.welcome-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 4000;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.welcome-modal {
+  background: white;
+  border-radius: 16px;
+  max-width: 700px;
+  width: 90%;
+  max-height: 90vh;
+  overflow-y: auto;
+  position: relative;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.welcome-modal-content {
+  padding: 40px;
+}
+
+/* 헤더 */
+.welcome-header {
+  text-align: center;
+  margin-bottom: 32px;
+}
+
+.welcome-title {
+  margin: 0 0 12px 0;
+  font-size: 32px;
+  font-weight: 700;
+  color: #FF6B6B; /* Coral */
+  line-height: 1.2;
+}
+
+.welcome-subtitle {
+  margin: 0;
+  font-size: 18px;
+  color: #5f6368;
+  line-height: 1.5;
+}
+
+/* 설명 섹션 */
+.welcome-description {
+  margin-bottom: 32px;
+  padding: 15px 10px 10px 15px;
+  background: #FFF9E6; /* Very Light Warm Yellow */
+  border-radius: 12px;
+  border-left: 4px solid #FF6B6B; /* Coral accent */
+}
+
+.welcome-description p {
+  margin: 0 0 16px 0;
+  font-size: 16px;
+  color: #202124;
+  line-height: 1.6;
+}
+
+.welcome-features {
+  margin: 0;
+  padding-left: 10px;
+  list-style: none;
+}
+
+.welcome-features li {
+  margin-bottom: 12px;
+  font-size: 15px;
+  color: #3c4043;
+  line-height: 1.6;
+}
+
+/* 설정 섹션 */
+.welcome-settings {
+  margin-bottom: 32px;
+}
+
+.welcome-settings-title {
+  margin: 0 0 16px 0;
+  font-size: 20px;
+  font-weight: 600;
+  color: #FF6B6B; /* Coral */
+}
+
+.welcome-settings-description {
+  margin: 0 0 24px 0;
+  padding: 10px 15px 10px 15px;
+  background: #FFF9E6; /* Very Light Warm Yellow */
+  border-radius: 12px;
+  border-left: 4px solid #FF6B6B; /* Coral accent */
+  font-size: 15px;
+  color: #3c4043;
+  line-height: 1.6;
+}
+
+.welcome-setting-item {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.welcome-setting-label {
+  font-size: 15px;
+  font-weight: 500;
+  color: #FF6B6B; /* Coral */
+}
+
+.welcome-slider {
+  width: 100%;
+  accent-color: #FFA502; /* Orange */
+  height: 8px;
+  border-radius: 4px;
+}
+
+/* 언어 설정 */
+.welcome-language-container {
+  position: relative;
+}
+
+.welcome-language-button {
+  width: 100%;
+  padding: 12px 16px;
+  background: white;
+  border: 1px solid #FFB7B7; /* Light Coral */
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 15px;
+  color: #202124;
+  transition: all 0.2s;
+}
+
+.welcome-language-button:hover {
+  background-color: #FFF3CD; /* Warm Yellow */
+  border-color: #FF6B6B; /* Coral */
+}
+
+.welcome-language-menu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  margin-top: 8px;
+  background: white;
+  border: 1px solid #FFB7B7; /* Light Coral */
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  padding: 4px;
+  z-index: 10;
+}
+
+.welcome-language-option {
+  width: 100%;
+  padding: 10px 12px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+  font-size: 15px;
+  color: #202124;
+}
+
+.welcome-language-option:hover {
+  background-color: #FFE082; /* Darker Yellow */
+}
+
+.welcome-language-option.active {
+  background-color: #FFF3CD; /* Warm Yellow */
+  color: #FF6B6B; /* Coral */
+  font-weight: 500;
+}
+
+.welcome-language-flag {
+  font-size: 20px;
+}
+
+.welcome-language-name {
+  font-size: 15px;
+}
+
+/* 시작하기 버튼 */
+.welcome-actions {
+  display: flex;
+  justify-content: center;
+  margin-top: 32px;
+}
+
+.welcome-start-button {
+  padding: 16px 48px;
+  background-color: #FF6B6B; /* Coral */
+  color: white;
+  border: none;
+  border-radius: 24px;
+  font-size: 18px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 4px 12px rgba(255, 107, 107, 0.3);
+}
+
+.welcome-start-button:hover {
+  background-color: #FF5252; /* Darker Coral */
+  box-shadow: 0 6px 16px rgba(255, 107, 107, 0.4);
+  transform: translateY(-2px);
+}
+
+.welcome-start-button:active {
+  transform: translateY(0);
+}
+
+@media (max-width: 768px) {
+  .welcome-modal {
+    width: 95%;
+    max-height: 95vh;
+  }
+
+  .welcome-modal-content {
+    padding: 24px;
+  }
+
+  .welcome-title {
+    font-size: 24px;
+  }
+
+  .welcome-subtitle {
+    font-size: 16px;
+  }
+
+  .welcome-description {
+    padding: 16px;
+  }
+}

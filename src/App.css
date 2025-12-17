@@ -58,14 +58,14 @@
   align-items: center;
   justify-content: center;
   z-index: 1001; /* AI 채팅 창(z-index: 1000)보다 위에 표시 */
-  color: #4285F4;
+  color: #FF6B6B; /* Coral */
   transition: all 0.3s ease; /* 채팅창 열림/닫힘 애니메이션과 일치 */
   font-size: 24px;
 }
 
 /* 채팅창이 열렸을 때 현재 위치 버튼을 좌측으로 이동 */
 .current-location-button.chat-open {
-  right: 220px; /* 기본 right(70px) + 채팅창 너비(350px) */
+  right: 420px;
 }
 
 .current-location-button:hover:not(:disabled) {
@@ -124,11 +124,11 @@
 .filter-btn {
   padding: 8px 16px;
   background: white;
-  border: 1px solid #dadce0;
+  border: 1px solid #FFB7B7; /* Light Coral */
   border-radius: 20px;
   font-size: 14px;
   font-weight: 500;
-  color: #3c4043;
+  color: #FF6B6B; /* Coral */
   cursor: pointer;
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
   transition: all 0.2s;
@@ -138,13 +138,13 @@
 }
 
 .filter-btn:hover {
-  background: #f8f9fa;
+  background: #FFF3CD; /* Warm Yellow */
 }
 
 .filter-btn.active {
-  background: #e8f0fe;
-  color: #1967d2;
-  border-color: #1967d2;
+  background: #FFF3CD; /* Warm Yellow */
+  color: #FF6B6B; /* Coral */
+  border-color: #FF6B6B;
 }
 
 /* Database View Overlay */
@@ -176,7 +176,7 @@
 
 .database-header {
   padding: 20px 24px;
-  border-bottom: 1px solid #e8eaed;
+  border-bottom: 1px solid #FFB7B7; /* Light Coral */
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -185,6 +185,7 @@
 .database-header h3 {
   margin: 0;
   font-size: 20px;
+  color: #FF6B6B; /* Coral */
 }
 
 .close-button {
@@ -192,7 +193,7 @@
   border: none;
   font-size: 24px;
   cursor: pointer;
-  color: #5f6368;
+  color: #FF6B6B; /* Coral */
 }
 
 .database-content {
@@ -209,19 +210,20 @@ table {
 th, td {
   padding: 12px;
   text-align: left;
-  border-bottom: 1px solid #e8eaed;
+  border-bottom: 1px solid #FFE082; /* Lighter Yellow */
 }
 
 th {
   font-weight: 600;
-  color: #5f6368;
-  background: #f8f9fa;
+  color: #FF6B6B; /* Coral */
+  background: #FFF3CD; /* Warm Yellow */
   position: sticky;
   top: 0;
+  border-bottom: 1px solid #FFB7B7; /* Light Coral */
 }
 
 tr:hover {
-  background: #f8f9fa;
+  background: #FFF9E6; /* Very Light Warm Yellow */
 }
 
 .type-badge {
@@ -231,9 +233,9 @@ tr:hover {
   font-weight: 500;
 }
 
-.type-badge.hotel { background: #e8f0fe; color: #1967d2; }
-.type-badge.restaurant { background: #e6f4ea; color: #137333; }
-.type-badge.tourist_attraction { background: #fef7e0; color: #b06000; }
+.type-badge.hotel { background: #FFF3CD; color: #FF6B6B; } /* Hotel: Warm Yellow bg, Coral text */
+.type-badge.restaurant { background: #FFE8CC; color: #E67E22; } /* Restaurant: Light Orange bg, Dark Orange text */
+.type-badge.tourist_attraction { background: #FFF3CD; color: #FFA502; } /* Tourist: Warm Yellow bg, Orange text */
 
 .remove-button {
   background: none;
@@ -243,10 +245,11 @@ tr:hover {
   padding: 4px 8px;
   border-radius: 4px;
   transition: background-color 0.2s;
+  color: #FF6B6B; /* Coral */
 }
 
 .remove-button:hover {
-  background-color: #f1f3f4;
+  background-color: #FFF3CD; /* Warm Yellow */
 }
 
 @media (max-width: 768px) {

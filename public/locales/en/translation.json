@@ -40,10 +40,15 @@
       "tourist attraction": "tourist attraction"
     },
     "results": "Search Results",
-    "clearResults": "Clear Search Results"
+    "clearResults": "Clear Search Results",
+    "error": {
+      "locationNotFound": "Search location center not found.",
+      "noResults": "No results found within {{radius}}m radius.",
+      "generic": "Search Error"
+    }
   },
   "chat": {
-    "title": "AI Chat",
+    "title": "AI Travel Agent",
     "placeholder": "Type a message...",
     "close": "Close",
     "clear": "Clear",
@@ -61,9 +66,32 @@
     "closed": "Closed",
     "address": "Address",
     "phone": "Phone",
-    "website": "Website"
+    "website": "Website",
+    "delete": "Delete",
+    "deleteConfirm": "Do you want to delete this place?"
+  },
+  "database": {
+    "type": "Type",
+    "name": "Name",
+    "rating": "Rating",
+    "reviews": "Reviews",
+    "address": "Address",
+    "website": "Website",
+    "delete": "Delete",
+    "link": "Link"
   },
   "route": {
     "clearRoute": "Clear Route"
+  },
+  "welcome": {
+    "title": "Welcome to Travel Map!",
+    "subtitle": "AI-based Travel Route Planning Recommendation Service",
+    "description": "This app helps you plan your trip through place search and AI travel agent using Google Maps API.",
+    "feature1": "Place Search: Find places you want. Search queries without location information (e.g., hotels, restaurants, tourist attractions) are searched based on the map location you are viewing.",
+    "feature2": "Save Places: Select and save places of interest and share them with the AI travel agent.",
+    "feature3": "AI Travel Agent: Provide your origin, departure time, duration, etc., and get faster and more accurate travel plans, recommendations, and routes displayed on the map based on saved places.",
+    "settingsTitle": "Initial Settings",
+    "feature4": "Setting the search radius and minimum rating will show search results according to your settings.",
+    "startButton": "Get Started"
   }
 }

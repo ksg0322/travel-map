@@ -40,10 +40,15 @@
       "tourist attraction": "観光地"
     },
     "results": "検索結果",
-    "clearResults": "検索結果をクリア"
+    "clearResults": "検索結果をクリア",
+    "error": {
+      "locationNotFound": "検索の中心位置が見つかりません。",
+      "noResults": "半径{{radius}}m以内に検索結果が見つかりませんでした。",
+      "generic": "検索エラー"
+    }
   },
   "chat": {
-    "title": "AIチャット",
+    "title": "AI旅行エージェント",
     "placeholder": "メッセージを入力...",
     "close": "閉じる",
     "clear": "履歴削除",
@@ -61,9 +66,32 @@
     "closed": "営業終了",
     "address": "住所",
     "phone": "電話番号",
-    "website": "ウェブサイト"
+    "website": "ウェブサイト",
+    "delete": "削除",
+    "deleteConfirm": "この場所を削除しますか？"
+  },
+  "database": {
+    "type": "タイプ",
+    "name": "名前",
+    "rating": "評価",
+    "reviews": "レビュー",
+    "address": "住所",
+    "website": "ウェブサイト",
+    "delete": "削除",
+    "link": "リンク"
   },
   "route": {
     "clearRoute": "ルートをクリア"
+  },
+  "welcome": {
+    "title": "Travel Mapへようこそ！",
+    "subtitle": "AIベースの旅行ルート計画推奨サービス",
+    "description": "Google Maps APIを活用して、場所検索とAI旅行エージェントを通じて旅行計画をお手伝いします。",
+    "feature1": "場所検索: お好みの場所を見つけてください。位置情報がない（例：ホテル、レストラン、観光地など）検索語は、見ている地図位置を基準に検索します。",
+    "feature2": "場所保存: 興味のある場所を選択して保存し、AI旅行エージェントに知らせてください。",
+    "feature3": "AI旅行エージェント: 出発地、出発時間、期間などを教えると、保存された場所を基準により速く正確な旅行計画と推奨、そしてルートが地図に表示されます。",
+    "settingsTitle": "初期設定",
+    "feature4": "検索半径と最低評価を設定すると、検索結果が設定に合わせて表示されます。",
+    "startButton": "始める"
   }
 }

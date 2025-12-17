@@ -318,40 +318,106 @@ export const getPlannerResponse = async (
   savedPlaces,
   radius,
   minRating,
-  mapCenter
 ) => {
   console.log('[Planner] getPlannerResponse 호출됨')
   
   try {
     // 1. 정보 확인 (데이터 준비)
     let placesWithLocation = []
+    
+    // 현재 위치를 0번 인덱스로 추가 (옵션으로 사용 가능하게)
+    if (currentLocation && currentLocation.lat && currentLocation.lng) {
+      placesWithLocation.push({
+        displayName: { text: '현재 위치' },
+        formattedAddress: currentLocation.address,
+        location: {
+          lat: currentLocation.lat,
+          lng: currentLocation.lng
+        }
+      })
+    }
+
+    // 저장된 장소들 추가
+    if (savedPlaces && savedPlaces.length >= 1) {
+      const validSavedPlaces = savedPlaces.filter(place => place.location && (place.location.latitude || place.location.lat))
+      placesWithLocation = [...placesWithLocation, ...validSavedPlaces]
+    }
+    
     let coordinates = []
     
-    if (savedPlaces && savedPlaces.length >= 2) {
-      placesWithLocation = savedPlaces.filter(place => place.location && (place.location.latitude || place.location.lat))
-      
-      if (placesWithLocation.length >= 2) {
-        coordinates = placesWithLocation.map(place => ({
-          lat: place.location.latitude || place.location.lat,
-          lng: place.location.longitude || place.location.lng
-        }))
-        console.log(`[Planner] 계획 가능한 장소: ${placesWithLocation.length}개`)
-      }
+    if (placesWithLocation.length >= 2) {
+      coordinates = placesWithLocation.map(place => ({
+        lat: place.location.latitude || place.location.lat,
+        lng: place.location.longitude || place.location.lng
+      }))
+      console.log(`[Planner] 계획 가능한 장소: ${placesWithLocation.length}개`)
     }
 
     // 2. Planning 단계 (방문 순서 결정 - 1단계)
-    // AI에게 순서만 JSON으로 요청 (시스템 프롬프트 직접 작성)
-    const planningPrompt = `당신은 여행 계획 전문가입니다. 저장된 장소들의 좌표를 확인하고, 가장 효율적인 이동 동선이 되도록 방문 순서를 결정해주세요.
     
-저장된 장소 목록 (인덱스: 장소명 [위도, 경도]):
+    // Distance Matrix API를 사용하여 장소 간 이동 거리/시간 계산
+    let distanceMatrixText = '';
+    // API 비용 및 속도를 고려하여 장소가 적당할 때만 수행 (예: 10개 이하)
+    if (placesWithLocation.length >= 2 && placesWithLocation.length <= 10) {
+      try {
+        console.log('[Planner] Distance Matrix 계산 시작')
+        const locations = placesWithLocation.map(p => ({
+            lat: p.location.latitude || p.location.lat,
+            lng: p.location.longitude || p.location.lng
+        }));
+        
+        // DRIVING 모드로 이동 시간 계산 (가장 보편적인 기준)
+        const matrixResults = await getDistanceMatrix(locations, locations, 'DRIVING', language);
+        
+        if (matrixResults && matrixResults.length > 0) {
+          distanceMatrixText = '\n[장소 간 예상 이동 시간 (차량 기준)]\n';
+          
+          // 결과 텍스트 변환
+          matrixResults.forEach(item => {
+            // 자기 자신으로의 이동은 제외
+            if (item.originIndex !== item.destinationIndex) {
+              const fromPlace = placesWithLocation[item.originIndex];
+              const toPlace = placesWithLocation[item.destinationIndex];
+              const fromName = fromPlace.displayName?.text || fromPlace.displayName || `장소${item.originIndex}`;
+              const toName = toPlace.displayName?.text || toPlace.displayName || `장소${item.destinationIndex}`;
+              
+              distanceMatrixText += `- ${item.originIndex}(${fromName}) -> ${item.destinationIndex}(${toName}): ${item.duration.text} (${item.distance.text})\n`;
+            }
+          });
+          console.log('[Planner] Distance Matrix 데이터 생성 완료')
+        }
+      } catch (e) {
+        console.warn('[Planner] Distance Matrix 계산 실패:', e);
+      }
+    }
+
+    // 대화 내역 포맷팅
+    const historyText = conversationHistory.map(msg => `${msg.role}: ${msg.content}`).join('\n');
+
+    // AI에게 순서만 JSON으로 요청 (시스템 프롬프트 직접 작성)
+    const planningPrompt = `당신은 여행 계획 전문가입니다. 주어진 장소들의 좌표와 이동 시간을 확인하고, 가장 효율적인 이동 동선이 되도록 방문 순서를 결정해주세요.
+    
+    장소 목록 (인덱스: 장소명 [위도, 경도]):
 ${placesWithLocation.map((p, i) => `${i}: ${p.displayName?.text || p.displayName} [${p.location.latitude || p.location.lat}, ${p.location.longitude || p.location.lng}]`).join('\n')}
 
-사용자 요청: "${message}"
+${distanceMatrixText}
 
-지시사항:
-1. 다른 설명 없이 오직 방문 순서를 나타내는 JSON 배열만 응답하세요.
-2. 예시: [0, 2, 1] (출발지 포함)
-3. 숫자 외에 다른 텍스트는 절대 포함하지 마세요.`
+    이전 대화 내역:
+${historyText}
+
+    사용자 요청: "${message}"
+
+    지시사항:
+    1. 사용자의 요청과 대화 내역을 바탕으로 여행 계획을 수립할 수 있는지 판단하세요.
+    2. **출발지나 여행 기간에 대한 대략적인 언급(예: "1일", "오늘", "지금", "추천해줘" 등)만 있어도 정보가 충분한 것으로 간주하고 계획을 수립하세요.**
+    3. 저장된 장소가 있다면, 별도의 언급이 없어도 그 장소들을 모두 방문하는 효율적인 동선을 짜세요. 너무 세세한 정보를 묻지 마세요.
+    4. 정말로 정보가 부족하여 계획을 짤 수 없는 경우에만 추가 질문을 하세요.
+    5. **목록의 0번 인덱스는 '현재 위치'입니다. 사용자가 현재 위치에서 출발하기를 원하거나, 저장된 장소가 1개뿐인 경우에는 반드시 0번(현재 위치)을 출발지로 하여 경로를 구성하세요. (예: [0, 1])**
+    6. **만약 사용자가 특정 장소(호텔 등)에서 시작하는 것을 원하거나 현재 위치가 불필요한 경우(저장된 장소가 여러 개일 때), 0번을 제외하고 경로를 구성하세요.**
+    7. **방문 순서는 반드시 출발지와 도착지를 포함하여 2개 이상의 인덱스로 구성되어야 합니다.**
+    8. 계획을 수립할 수 있다면, 다른 설명 없이 오직 방문 순서를 나타내는 JSON 배열만 응답하세요.
+    9. 예시: [0, 2, 1] (현재 위치 출발 시) 또는 [1, 2] (현재 위치 제외 시)
+    10. 숫자 외에 다른 텍스트는 절대 포함하지 마세요.`
 
     console.log('[Planner] 1단계: 방문 순서 계획 수립 요청 (JSON Only)')
     const planningResponse = await generateAgentResponse(planningPrompt, "순서를 정해주세요.", [])
@@ -360,6 +426,7 @@ ${placesWithLocation.map((p, i) => `${i}: ${p.displayName?.text || p.displayName
     // 3. Processing 단계 (순서 파싱 및 경로 계산)
     let detailedRouteInfo = ''
     let routePaths = [] // 지도에 표시할 경로 데이터
+    let isOrderDetermined = false // 방문 순서 결정 완료 플래그
     
     // 배열 파싱
     let orderMatch = planningResponse.match(/\[(.*?)\]/s)
@@ -374,11 +441,15 @@ ${placesWithLocation.map((p, i) => `${i}: ${p.displayName?.text || p.displayName
         
         console.log('[Planner] 파싱된 방문 순서:', orderIndices)
         
-        if (orderIndices.length >= 2) {
+        // 방문 순서가 올바르게 결정되었는지 확인 (길이, 유효한 인덱스 범위)
+        if (orderIndices.length >= 2 && orderIndices.every(idx => idx >= 0 && idx < placesWithLocation.length)) {
+          isOrderDetermined = true
+          console.log('[Planner] 방문 순서 결정 완료:', orderIndices)
+          
           detailedRouteInfo += '\n[계획된 경로 상세 정보]\n'
           detailedRouteInfo += `결정된 방문 순서: ${orderIndices.map(idx => placesWithLocation[idx].displayName?.text || `장소${idx}`).join(' -> ')}\n`
           
-          // 순서대로 Directions API 호출하여 지도에 경로 표시
+          // 방문 순서 결정이 완료된 경우에만 경로 그리기
           for (let i = 0; i < orderIndices.length - 1; i++) {
             const fromIdx = orderIndices[i]
             const toIdx = orderIndices[i+1]
@@ -409,6 +480,8 @@ ${placesWithLocation.map((p, i) => `${i}: ${p.displayName?.text || p.displayName
               }
             }
           }
+        } else {
+          console.log('[Planner] 방문 순서가 올바르게 결정되지 않았습니다. 인덱스 범위를 확인하세요.')
         }
       } catch (e) {
         console.warn('[Planner] 순서 파싱 오류:', e)
@@ -416,10 +489,16 @@ ${placesWithLocation.map((p, i) => `${i}: ${p.displayName?.text || p.displayName
     } else {
       console.log('[Planner] 방문 순서를 결정하지 못했거나 장소가 부족합니다.')
     }
+    
+    // 방문 순서가 결정되지 않은 경우 빈 배열 반환
+    if (!isOrderDetermined) {
+      routePaths = []
+      console.log('[Planner] 방문 순서 결정 실패로 인해 경로를 그리지 않습니다.')
+    }
 
     // 4. Responding 단계 (최종 사용자 응답 - 2단계)
     // 계산된 경로 정보와 함께 최종 답변 생성 (설명만)
-    const contextPrompt = buildContextPrompt(currentLocation, mapCenter, savedPlaces, null, radius, minRating, 'planner')
+    const contextPrompt = buildContextPrompt(currentLocation, savedPlaces, null, radius, minRating, 'planner')
     const systemPrompt = getPlannerSystemPrompt(language, contextPrompt + detailedRouteInfo)
     
     console.log('[Planner] 2단계: 최종 답변 생성 요청 (설명)')
@@ -563,7 +642,6 @@ export const getChatResponseWithAgents = async (
           savedPlaces,
           radius,
           minRating,
-          mapCenter
         )
         // Planner는 {response, routePaths} 객체를 반환
         response = plannerResult.response

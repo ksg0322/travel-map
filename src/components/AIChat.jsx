@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import './AIChat.css'
 import { getChatResponseWithAgents } from '../services/geminiApi'
@@ -22,7 +22,13 @@ const AIChat = ({
   const [messages, setMessages] = useState(() => conversationMemory.load())
   const [inputValue, setInputValue] = useState('')
   const [isLoading, setIsLoading] = useState(false)
+
+  // 채팅창 높이 조절 상태
+  const [height, setHeight] = useState(600)
+  const [isResizing, setIsResizing] = useState(false)
+
   const messagesEndRef = useRef(null)
+  const chatPanelRef = useRef(null)
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -39,6 +45,35 @@ const AIChat = ({
     }
   }, [messages])
 
+  // 크기 조절 핸들러
+  const startResizing = useCallback((mouseDownEvent) => {
+    mouseDownEvent.preventDefault()
+    setIsResizing(true)
+  }, [])
+
+  const stopResizing = useCallback(() => {
+    setIsResizing(false)
+  }, [])
+
+  const resize = useCallback((mouseMoveEvent) => {
+    if (isResizing) {
+      const newHeight = window.innerHeight - mouseMoveEvent.clientY
+      // 최소 높이 400px, 최대 높이 화면의 90%로 제한
+      if (newHeight > 400 && newHeight < window.innerHeight * 1) {
+        setHeight(newHeight)
+      }
+    }
+  }, [isResizing])
+
+  useEffect(() => {
+    window.addEventListener('mousemove', resize)
+    window.addEventListener('mouseup', stopResizing)
+    return () => {
+      window.removeEventListener('mousemove', resize)
+      window.removeEventListener('mouseup', stopResizing)
+    }
+  }, [resize, stopResizing])
+
   const handleSend = async (e) => {
     e.preventDefault()
     if (inputValue.trim() && !isLoading) {
@@ -51,9 +86,6 @@ const AIChat = ({
       setMessages(newMessages)
 
       try {
-        // AI 응답 가져오기 (역할 기반 시스템 사용)
-        // Planner는 실제 현재 위치만 사용 (mapCenter 사용 안 함)
-        // 따라서 currentLocation만 전달 (mapCenter는 전달하지 않음)
         const result = await getChatResponseWithAgents(
           userMessage, 
           newMessages, 
@@ -229,9 +261,18 @@ const AIChat = ({
   }
 
   return (
-    <div className="chat-panel">
+    <div 
+      className="chat-panel" 
+      ref={chatPanelRef}
+      style={{ height: `${height}px` }}
+    >
+      {/* 크기 조절 핸들 */}
+      <div className="resize-handle" onMouseDown={startResizing}>
+        <div className="resize-handle-bar"></div>
+      </div>
+
       <div className="chat-header">
-        <h3 className="chat-title">{t.title}</h3>
+        <h3 className="chat-title">{t('chat.title')}</h3>
         <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
           {messages.length > 0 && (
             <button 

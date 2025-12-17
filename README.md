@@ -1,16 +1,63 @@
-# React + Vite
+# 🗺️ AI Travel Map (AI 기반 여행 경로 추천 서비스)
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Google API를 활용하여 장소를 검색하고 사용자 맞춤형 여행 경로를 계획하여 시각화해주는 웹 애플리케이션입니다.
 
-Currently, two official plugins are available:
+## 🚀 프로젝트 개요
+사용자가 원하는 장소를 검색하고 저장하면, AI 여행 에이전트가 최적의 여행 경로를 계획하여 지도에 표시해줍니다. 단순한 장소 추천을 넘어, 실제 이동 동선을 고려한 여행 계획을 경험할 수 있습니다.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## ✨ 주요 기능
 
-## React Compiler
+### 1. 🔍 장소 검색 및 상세 정보
+- **키워드 검색**: 원하는 장소(맛집, 호텔, 관광지 등)를 키워드로 검색할 수 있습니다.
+- **상세 정보 확인**: 검색된 장소의 평점, 리뷰 수, 사진, 주소, 연락처 등 상세 정보를 확인할 수 있습니다.
+- **카테고리 필터**: 호텔, 식당, 관광지 등 카테고리별로 검색 결과를 필터링할 수 있습니다.
+- **정렬 기능**: 거리순, 평점순 등으로 검색 결과를 정렬하여 볼 수 있습니다.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+### 2. 🤖 AI 여행 에이전트
+- **Role-Based AI**: Supervisor, Planner, Communicator, Search Agent 등 역할이 분담된 AI 시스템이 유기적으로 동작합니다.
+- **여행 경로 계획 (Planner)**:
+  - 저장된 장소와 현재 위치를 기반으로 최적의 방문 순서를 제안합니다.
+  - 여행 기간(예: 3일, 당일치기)이나 출발지를 고려하여 동선을 짭니다.
+  - 계획된 경로는 **지도 위에 시각적인 선(Polyline)**으로 그려집니다.
+- **자연스러운 대화 (Communicator)**: 여행 가이드처럼 친절하게 대화하며 정보를 제공합니다.
+- **추가 장소 추천 (Search Agent)**: 대화 중 새로운 장소 추천 요청이 들어오면 알려줍니다.
 
-## Expanding the ESLint configuration
+### 3. ⭐ 장소 저장 및 관리
+- **관심 장소 저장**: 검색 결과에서 마음에 드는 장소를 '저장'하여 나만의 리스트를 만들 수 있습니다.
+- **저장된 장소 관리**: 사이드바에서 저장된 장소 목록을 확인하고, 유형(호텔, 식당 등)별로 아이콘과 함께 볼 수 있습니다.
+- **로컬 저장소 연동**: 브라우저를 닫았다 열어도 저장된 장소와 설정이 유지됩니다 (localStorage).
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+### 4. 🌍 다국어 지원 (i18n)
+- **4개 국어 지원**: 한국어(KO), 영어(EN), 일본어(JA), 중국어(ZH)를 완벽하게 지원합니다.
+- **실시간 언어 변경**: UI 텍스트뿐만 아니라 Google Maps의 지도 언어, 장소 정보, AI의 응답 언어까지 즉시 변경됩니다.
+
+### 5. 🎨 UI/UX & 테마
+- **Sunset Vibe 테마**: 따뜻하고 감성적인 노을 빛 컬러(#FF6B6B, #FFA502, #FFF3CD)를 적용한 직관적인 UI를 제공합니다.
+- **반응형 디자인**: 다양한 화면 크기에 대응하는 레이아웃을 제공합니다.
+- **초기 설정 모달**: 첫 방문 시 언어, 검색 반경, 최소 평점 등을 설정할 수 있는 환영 모달을 제공합니다.
+
+## 🛠️ 기술 스택
+
+### Frontend
+- **React (Vite)**: 빠르고 효율적인 웹 애플리케이션 구축
+- **CSS3**: Flexbox, Grid 및 CSS 변수를 활용한 커스텀 스타일링
+
+### APIs & Services
+- **Google Maps Platform**:
+  - Maps JavaScript API (지도 표시, 마커, 정보창)
+  - Places API (New) (장소 검색, 세부 정보)
+  - Geocoding API (주소-좌표 변환)
+  - Directions API (경로 계산 및 시각화)
+  - Distance Matrix API (경로 간 이동 거리와 시간 계산)
+- **Google Gemini API**:
+  - `gemini-2.5-flash-lite` 모델을 활용한 고성능 AI 채팅 및 여행 계획 수립
+- **Firebase**:
+  - Firebase Hosting을 통한 정적 웹 호스팅 및 배포
+
+### Libraries
+- `@vis.gl/react-google-maps`: React용 Google Maps 컴포넌트 라이브러리
+- `i18next` & `react-i18next`: 다국어 처리
+- `markdown-to-jsx`: AI 응답의 마크다운 렌더링
+
+## 📝 라이선스
+This project is licensed under the MIT License.

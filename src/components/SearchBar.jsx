@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import './SearchBar.css'
-import { autocompletePlaces } from '../services/placesApi'
+// import { autocompletePlaces } from '../services/placesApi'
 
 const SearchBar = ({ language, onSearch, currentLocation }) => {
   const [searchQuery, setSearchQuery] = useState('')
@@ -13,8 +13,17 @@ const SearchBar = ({ language, onSearch, currentLocation }) => {
   const timeoutRef = useRef(null)
   const { t } = useTranslation()
 
-  // 자동완성 제안 가져오기 (검색창에 포커스가 있을 때만)
+  // 자동완성 제안 가져오기 (검색창에 포커스가 있을 때만) - 비활성화됨
   useEffect(() => {
+    // 자동완성 기능 비활성화
+    setSuggestions([])
+    setIsOpen(false)
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current)
+    }
+    
+    // 아래 코드는 자동완성 기능이 활성화되어 있을 때 사용
+    /*
     // 포커스가 없으면 API 호출하지 않음
     if (!isFocused) {
       setSuggestions([])
@@ -51,6 +60,7 @@ const SearchBar = ({ language, onSearch, currentLocation }) => {
         clearTimeout(timeoutRef.current)
       }
     }
+    */
   }, [searchQuery, currentLocation, language, isFocused])
 
   // 외부 클릭 시 자동완성 닫기

@@ -288,10 +288,10 @@ const Map = ({ language, searchResults = [], currentLocation = null, center = nu
           >
             <img 
               src={'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
-                <svg width="32" height="32" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+                    <svg width="32" height="32" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
                   <circle cx="16" cy="16" r="10" fill="red" fill-opacity="0.9" stroke="white" stroke-width="2"/>
                   <circle cx="16" cy="16" r="4" fill="white"/>
-                </svg>
+                    </svg>
               `)}
               width={32}
               height={32}

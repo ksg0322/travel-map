@@ -8,6 +8,7 @@ import ChatPopup from './components/AIChat'
 import GoogleMap from './components/Map'
 import SearchResults from './components/SearchResults'
 import PlaceDetailModal from './components/PlaceDetailModal'
+import WelcomeModal from './components/WelcomeModal'
 import { searchLocationCoordinates, searchCategoryPlaces, searchPlaces, getPlaceDetails, geocodeAddress, reverseGeocode } from './services/placesApi'
 
 // 데이터베이스 뷰 컴포넌트 (표 형태)
@@ -29,51 +30,84 @@ const DatabaseView = ({ results, onClose, onRemove }) => {
             <table>
               <thead>
                 <tr>
-                  <th>Type</th>
-                  <th>Name</th>
-                  <th>Rating</th>
-                  <th>Reviews</th>
-                  <th>Address</th>
-                  <th>Website</th>
-                  {onRemove && <th>Actions</th>}
+                  <th>{t('database.type')}</th>
+                  <th>{t('database.name')}</th>
+                  <th>{t('database.rating')}</th>
+                  <th>{t('database.reviews')}</th>
+                  <th>{t('database.address')}</th>
+                  <th>{t('database.website')}</th>
+                  {onRemove && <th>{t('database.delete')}</th>}
                 </tr>
               </thead>
               <tbody>
-                {results.map((place, index) => (
-                  <tr key={place.id || index}>
-                    <td>
-                      <span className={`type-badge ${place.type?.toLowerCase()}`}>
-                        {place.type === 'Hotel' ? '🏨' : 
-                         place.type === 'Restaurant' ? '🍴' : 
-                         place.type === 'Tourist attraction' ? '⭐' : '📍'} {place.type}
-                      </span>
-                    </td>
-                    <td>{place.displayName?.text || place.displayName}</td>
-                    <td>{place.rating ? `⭐ ${place.rating}` : '-'}</td>
-                    <td>{place.userRatingCount || 0}</td>
-                    <td>{place.formattedAddress}</td>
-                    <td>
-                      {place.websiteUri ? (
-                        <a href={place.websiteUri} target="_blank" rel="noopener noreferrer">Link</a>
-                      ) : '-'}
-                    </td>
-                    {onRemove && (
+                {results.map((place, index) => {
+                  // Type 번역 처리 (기존 저장된 데이터도 고려)
+                  let typeDisplay = place.type || ''
+                  let typeIcon = '📍'
+                  let typeClass = 'place'
+                  
+                  // place.type 또는 place.types 배열에서 타입 추론
+                  const placeType = place.type || ''
+                  const typesArray = place.types || []
+                  
+                  // 타입 매칭 (대소문자 무시)
+                  const normalizedType = placeType.toLowerCase().trim()
+                  
+                  if (normalizedType === 'hotel' || typesArray.some(t => t.toLowerCase().includes('lodging'))) {
+                    typeDisplay = t('search.categories.hotel')
+                    typeIcon = '🏨'
+                    typeClass = 'hotel'
+                  } else if (normalizedType === 'restaurant' || typesArray.some(t => t.toLowerCase().includes('restaurant') || t.toLowerCase().includes('food'))) {
+                    typeDisplay = t('search.categories.restaurant')
+                    typeIcon = '🍴'
+                    typeClass = 'restaurant'
+                  } else if (normalizedType === 'tourist attraction' || normalizedType === 'tourist' || typesArray.some(t => t.toLowerCase().includes('tourist'))) {
+                    typeDisplay = t('search.categories.tourist attraction')
+                    typeIcon = '⭐'
+                    typeClass = 'tourist_attraction'
+                  } else if (placeType) {
+                    // 타입이 있지만 매칭되지 않은 경우 원본 표시
+                    typeDisplay = placeType
+                    typeClass = placeType.toLowerCase().replace(/\s+/g, '_')
+                  } else {
+                    // 타입 정보가 전혀 없는 경우 기본값
+                    typeDisplay = t('search.categories.all')
+                  }
+                  
+                  return (
+                    <tr key={place.id || index}>
                       <td>
-                        <button 
-                          onClick={() => {
-                            if (window.confirm(t('place.deleteConfirm'))) {
-                              onRemove(place.id)
-                            }
-                          }}
-                          className="remove-button"
-                          title={t('place.delete')}
-                        >
-                          🗑️
-                        </button>
+                        <span className={`type-badge ${typeClass}`}>
+                          {typeIcon} {typeDisplay}
+                        </span>
                       </td>
-                    )}
-                  </tr>
-                ))}
+                      <td>{place.displayName?.text || place.displayName}</td>
+                      <td>{place.rating ? `⭐ ${place.rating}` : '-'}</td>
+                      <td>{place.userRatingCount || 0}</td>
+                      <td>{place.formattedAddress}</td>
+                      <td>
+                        {place.websiteUri ? (
+                          <a href={place.websiteUri} target="_blank" rel="noopener noreferrer">{t('database.link')}</a>
+                        ) : '-'}
+                      </td>
+                      {onRemove && (
+                        <td>
+                          <button 
+                            onClick={() => {
+                              if (window.confirm(t('place.deleteConfirm'))) {
+                                onRemove(place.id)
+                              }
+                            }}
+                            className="remove-button"
+                            title={t('place.delete')}
+                          >
+                            🗑️
+                          </button>
+                        </td>
+                      )}
+                    </tr>
+                  )
+                })}
               </tbody>
             </table>
           )}
@@ -85,8 +119,9 @@ const DatabaseView = ({ results, onClose, onRemove }) => {
 
 function App() {
   const { t, i18n } = useTranslation()
-  const [isChatOpen, setIsChatOpen] = useState(false)
+  const [isChatOpen, setIsChatOpen] = useState(true)
   const [isDatabaseOpen, setIsDatabaseOpen] = useState(false)
+  const [showWelcomeModal, setShowWelcomeModal] = useState(false)
   const [language, setLanguage] = useState(i18n.language || 'ko')
   const [searchResults, setSearchResults] = useState([])
   const [currentLocation, setCurrentLocation] = useState(null)
@@ -294,8 +329,13 @@ function App() {
     )
   }
 
-  // 컴포넌트 마운트 시 위치 가져오기
+  // 컴포넌트 마운트 시 위치 가져오기 및 환영 모달 체크
   useEffect(() => {
+    // 환영 모달 표시 여부 확인 (localStorage)
+    const hasVisited = localStorage.getItem('travelMap_hasVisited')
+    if (!hasVisited) {
+      setShowWelcomeModal(true)
+    }
     // 초기 기본 위치 (서울)
     if (!currentLocation) {
       const defaultLoc = { lat: 37.5665, lng: 126.9780 }
@@ -383,18 +423,12 @@ function App() {
           allPlaces = tourist_attractions
         }
       } else {
-        // 일반 키워드인 경우 모든 카테고리 + 일반 검색
-        const [hotels, restaurants, tourist_attractions, generalPlaces] = await Promise.all([
-          searchCategoryPlaces(`${query} 호텔`, searchCenter, radius, minRating, 'Hotel', language),
-          searchCategoryPlaces(`${query} 맛집`, searchCenter, radius, minRating, 'Restaurant', language),
-          searchCategoryPlaces(`${query} 관광지`, searchCenter, radius, minRating, 'Tourist', language),
-          searchPlaces(query, searchCenter, language, radius)
-        ])
+        // 일반 키워드인 경우 searchPlaces만 호출 (API 호출 최적화: 4번 → 1번)
+        const generalPlaces = await searchPlaces(query, searchCenter, language, radius)
 
         // 일반 검색 결과 처리: 타입이 지정되지 않았으므로 API 데이터를 기반으로 추론하거나 'Place'로 설정
         const formattedGeneralPlaces = generalPlaces
           .filter(place => {
-            // 평점 필터링 개선: 식당/숙박 등 서비스 업종에만 엄격하게 적용
             
             // 1. 평점 정보가 없는 경우(지명, 시설 등)는 무조건 포함
             if (place.rating === undefined || place.rating === null) return true;
@@ -421,8 +455,7 @@ function App() {
           return { ...place, type };
         });
 
-        // 일반 검색 결과를 가장 앞으로 배치하여 검색 정확도가 높은 순으로 표시
-        allPlaces = [...formattedGeneralPlaces, ...hotels, ...restaurants, ...tourist_attractions]
+        allPlaces = formattedGeneralPlaces
       }
 
       // 3. 결과 합치기 및 중복 제거
@@ -511,8 +544,8 @@ function App() {
             const distanceA = a.distanceFromCenter || Infinity
             const distanceB = b.distanceFromCenter || Infinity
             return distanceA - distanceB
-          })
-        }
+        })
+      }
       }
 
       console.log('통합 검색 결과 (반경 필터링 후):', finalResults)
@@ -562,11 +595,25 @@ function App() {
       libraries={['geometry']}
       onLoad={() => getCurrentLocation()} // 지도가 로드된 후 위치 가져오기 실행
     >
+      {/* 환영 모달 */}
+      {showWelcomeModal && (
+        <WelcomeModal 
+          onClose={() => setShowWelcomeModal(false)}
+          language={language}
+          onLanguageChange={handleLanguageChange}
+          minRating={minRating}
+          onMinRatingChange={setMinRating}
+          radius={radius}
+          onRadiusChange={setRadius}
+        />
+      )}
+
       <div className="app-container">
         {/* 사이드바 (설정 패널) */}
         <Sidebar 
           onChatClick={() => setIsChatOpen(!isChatOpen)}
           onDatabaseClick={() => setIsDatabaseOpen(true)}
+          onWelcomeClick={() => setShowWelcomeModal(true)}
           language={language}
           onLanguageChange={handleLanguageChange}
           minRating={minRating}
@@ -581,16 +628,15 @@ function App() {
           className="main-content" 
           style={{ 
             marginLeft: '300px', 
-            marginRight: isChatOpen ? '350px' : '0',
-            width: isChatOpen ? 'calc(100% - 650px)' : 'calc(100% - 300px)',
+            width: 'calc(100% - 300px)',
             transition: 'all 0.3s ease'
           }}
         >
-          <div className="map-container">
+        <div className="map-container">
             {/* 상단 컨트롤 컨테이너 (검색바 + 필터) */}
             <div className="top-controls-container">
               <SearchBar language={language} onSearch={handleSearch} currentLocation={mapCenter || currentLocation} />
-              
+          
               {/* 경로 삭제 버튼 (경로가 있을 때만 표시) */}
               {routePaths && routePaths.length > 0 && (
                 <button
@@ -646,17 +692,17 @@ function App() {
             </div>
             
             {filteredResults.length > 0 && (
-              <SearchResults 
+            <SearchResults 
                 results={filteredResults}
                 onSelectPlace={handleSelectPlace}
                 onClear={handleClearSearchResults}
-              />
-            )}
-            
+            />
+          )}
+          
             <GoogleMap 
-              language={language} 
+            language={language} 
               searchResults={filteredResults}
-              currentLocation={currentLocation}
+            currentLocation={currentLocation}
               center={mapCenter} // 지도 중심 좌표 전달
               selectedPlace={selectedPlace} // 선택된 장소 전달
               onSelectPlace={handleSelectPlace} // 선택 핸들러 전달 (상세 정보 포함)
@@ -665,21 +711,21 @@ function App() {
               routePaths={routePaths} // 여행 경로 데이터 전달
             />
 
-            <button
+          <button
               className={`current-location-button ${isChatOpen ? 'chat-open' : ''}`}
-              onClick={getCurrentLocation}
-              disabled={isGettingLocation}
+            onClick={getCurrentLocation}
+            disabled={isGettingLocation}
               title={t('location.moveToCurrent')}
             >
               {isGettingLocation ? '...' : '📍'}
-            </button>
+          </button>
 
-            {locationError && (
-              <div className="location-error-message">
-                <span>{locationError}</span>
-                <button onClick={() => setLocationError(null)}>✕</button>
-              </div>
-            )}
+          {locationError && (
+            <div className="location-error-message">
+              <span>{locationError}</span>
+              <button onClick={() => setLocationError(null)}>✕</button>
+            </div>
+          )}
           </div>
         </div>
 
@@ -688,7 +734,7 @@ function App() {
           <ChatPopup 
             onClose={() => setIsChatOpen(false)}
             language={language}
-            searchResults={searchResults} // 필터링되지 않은 전체 결과를 AI에게 전달
+            searchResults={searchResults}
             currentLocation={currentLocation}
             mapCenter={mapCenter}
             savedPlaces={savedPlaces}

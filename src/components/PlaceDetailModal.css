@@ -108,15 +108,15 @@
 
 .place-detail-save-button:hover:not(:disabled) {
   background: #f8f9fa;
-  border-color: #1a73e8;
-  color: #1a73e8;
+  border-color: #FF6B6B; /* Coral */
+  color: #FF6B6B;
 }
 
 .place-detail-save-button:disabled,
 .place-detail-save-button.saved {
-  background: #e8f0fe;
-  border-color: #1a73e8;
-  color: #1a73e8;
+  background: #FFF3CD; /* Warm Yellow */
+  border-color: #FF6B6B;
+  color: #FF6B6B;
   cursor: not-allowed;
 }
 
@@ -138,7 +138,7 @@
 }
 
 .place-detail-rating {
-  color: #1967d2;
+  color: #FFA502; /* Orange */
   font-weight: 500;
   font-size: 14px;
 }
@@ -164,7 +164,7 @@
 }
 
 .place-detail-phone a {
-  color: #1a73e8;
+  color: #FF6B6B; /* Coral */
   text-decoration: none;
 }
 
@@ -237,7 +237,7 @@
 
 .place-detail-review-rating {
   font-size: 13px;
-  color: #1967d2;
+  color: #FFA502; /* Orange */
   font-weight: 500;
 }
 
@@ -258,8 +258,8 @@
 }
 
 .place-detail-type-tag {
-  background-color: #e8f0fe;
-  color: #1967d2;
+  background-color: #FFF3CD; /* Warm Yellow */
+  color: #FF6B6B; /* Coral */
   padding: 4px 10px;
   border-radius: 12px;
   font-size: 12px;
@@ -276,7 +276,7 @@
 
 .place-detail-link {
   display: inline-block;
-  color: #1a73e8;
+  color: #FF6B6B; /* Coral */
   text-decoration: none;
   font-size: 14px;
   font-weight: 500;
@@ -288,7 +288,7 @@
 
 .place-detail-link:hover {
   background-color: #f8f9fa;
-  border-color: #1a73e8;
+  border-color: #FF6B6B;
 }
 
 @media (max-width: 768px) {
