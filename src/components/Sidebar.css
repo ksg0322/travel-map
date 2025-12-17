@@ -19,12 +19,13 @@
 }
 
 .sidebar-header {
-  margin-bottom: 24px;
+  margin-bottom: 10px;
 }
 
 .sidebar-header h3 {
   margin: 0;
   font-size: 30px;
+  text-align: center;
   color: #d86262;
 }
 
@@ -35,9 +36,9 @@
 }
 
 .sidebar-section h4 {
-  margin: 0 0 12px 0;
+  margin: 0 0 0 0;
   font-size: 14px;
-  color: #FF6B6B;
+  color: #d86262;
 }
 
 .setting-item {
@@ -71,7 +72,8 @@
 
 .sidebar-button {
   width: 100%;
-  height: 40px;
+  height: 45px;
+  margin: 0 0 5px 0;
   border: 1px solid #FFB7B7; /* Light Coral */
   background: #FFF3CD; /* Warm Yellow */
   border-radius: 8px;
@@ -166,6 +168,13 @@
 
 .language-name {
   font-size: 14px;
+}
+
+.language-dropdown-icon {
+  margin-left: auto;
+  font-size: 10px;
+  color: #FF6B6B;
+  transition: transform 0.2s;
 }
 
 @media (max-width: 768px) {

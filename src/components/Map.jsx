@@ -144,7 +144,7 @@ const RouteRenderer = ({ routePaths }) => {
   return null
 }
 
-const Map = ({ language, searchResults = [], currentLocation = null, center = null, selectedPlace = null, onSelectPlace = null, onCenterChange = null, isChatOpen = false, routePaths = [] }) => {
+const Map = ({ language, searchResults = [], currentLocation = null, center = null, selectedPlace = null, lastViewedPlace = null, onSelectPlace = null, onCenterChange = null, isChatOpen = false, routePaths = [] }) => {
   // 현재 위치가 실제 GPS 위치인지 확인 (서울 기본값이 아닌지)
   const isRealGPSLocation = currentLocation && 
     !(currentLocation.lat === 37.5665 && currentLocation.lng === 126.9780)
@@ -300,10 +300,42 @@ const Map = ({ language, searchResults = [], currentLocation = null, center = nu
           </AdvancedMarker>
         )}
 
+        {/* 마지막으로 상세보기를 한 장소에 빨간색 마커 표시 */}
+        {lastViewedPlace && (() => {
+          const lastViewedPosition = getPlacePosition(lastViewedPlace);
+          if (!lastViewedPosition) return null;
+          
+          // 검색 결과에 포함되어 있지 않은 경우에만 별도로 표시
+          const isInSearchResults = searchResults.some(place => place.id === lastViewedPlace.id);
+          
+          return (
+            <AdvancedMarker
+              key={`last-viewed-${lastViewedPlace.id}`}
+              position={lastViewedPosition}
+              title={`${lastViewedPlace.displayName?.text || lastViewedPlace.displayName}`}
+              zIndex={150} // 검색 결과 마커보다 위에 표시
+            >
+              <img 
+                src={'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
+                  <svg width="40" height="40" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M20 0C11.163 0 4 7.163 4 16C4 26 20 40 20 40C20 40 36 26 36 16C36 7.163 28.837 0 20 0Z" fill="#EA4335" stroke="#C5221F" stroke-width="2"/>
+                    <circle cx="20" cy="16" r="6" fill="white"/>
+                  </svg>
+                `)}
+                width={40}
+                height={40}
+              />
+            </AdvancedMarker>
+          );
+        })()}
+
         {/* 검색 결과 마커 표시 */}
         {searchResults.map((place, index) => {
           const position = getPlacePosition(place);
           if (!position) return null;
+          
+          // 마지막으로 본 장소인지 확인
+          const isLastViewed = lastViewedPlace && place.id === lastViewedPlace.id;
           
           return (
             <AdvancedMarker
@@ -314,11 +346,12 @@ const Map = ({ language, searchResults = [], currentLocation = null, center = nu
                 // 이벤트 전파 중단은 AdvancedMarker에서 자동으로 처리되지 않을 수 있음
                 if (onSelectPlace) onSelectPlace(place);
               }}
+              zIndex={isLastViewed ? 150 : 100} // 마지막으로 본 장소는 위에 표시
             >
               <img 
                 src={'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
                   <svg width="40" height="40" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M20 0C11.163 0 4 7.163 4 16C4 26 20 40 20 40C20 40 36 26 36 16C36 7.163 28.837 0 20 0Z" fill="#4285F4" stroke="#C5221F" stroke-width="1"/>
+                    <path d="M20 0C11.163 0 4 7.163 4 16C4 26 20 40 20 40C20 40 36 26 36 16C36 7.163 28.837 0 20 0Z" fill="${isLastViewed ? '#EA4335' : '#4285F4'}" stroke="#C5221F" stroke-width="${isLastViewed ? '2' : '1'}"/>
                     <circle cx="20" cy="16" r="6" fill="white"/>
                   </svg>
                 `)}

@@ -26,9 +26,10 @@
     "language": "Language",
     "radius": "Search Radius",
     "minRating": "Min Rating",
-    "unit": "m",
+    "unit": "rating",
     "savedPlaces": "Saved Places",
-    "noSavedPlaces": "No saved places."
+    "noSavedPlaces": "No saved places.",
+    "appInfo": "App Info & Settings"
   },
   "search": {
     "placeholder": "Search places (e.g., restaurant, hotel, tourist attraction)",
@@ -83,6 +84,9 @@
   "route": {
     "clearRoute": "Clear Route"
   },
+  "map": {
+    "clearLastViewed": "Clear selected place"
+  },
   "welcome": {
     "title": "Welcome to Travel Map!",
     "subtitle": "AI-based Travel Route Planning Recommendation Service",
@@ -92,6 +96,7 @@
     "feature3": "AI Travel Agent: Provide your origin, departure time, duration, etc., and get faster and more accurate travel plans, recommendations, and routes displayed on the map based on saved places.",
     "settingsTitle": "Initial Settings",
     "feature4": "Setting the search radius and minimum rating will show search results according to your settings.",
+    "helpText": "If you want to see the description again, please click the App Info & Settings button at the bottom left.",
     "startButton": "Get Started"
   }
 }

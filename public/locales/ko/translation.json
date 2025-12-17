@@ -22,13 +22,14 @@
     }
   },
   "sidebar": {
-    "settings": "설정",
+    "settings": "검색 필터 설정",
     "language": "언어",
     "radius": "검색 반경",
     "minRating": "최소 평점",
-    "unit": "m",
+    "unit": "점",
     "savedPlaces": "저장된 장소",
-    "noSavedPlaces": "저장된 장소가 없습니다."
+    "noSavedPlaces": "저장된 장소가 없습니다.",
+    "appInfo": "앱 소개 및 설정"
   },
   "search": {
     "placeholder": "장소 검색 (예: 맛집, 호텔, 관광지)",
@@ -48,17 +49,17 @@
     }
   },
   "chat": {
-    "title": "AI 여행 에이전트",
+    "title": "AI 여행 추천 에이전트",
     "placeholder": "메시지를 입력하세요...",
     "close": "닫기",
     "clear": "기록 삭제",
     "clearConfirm": "대화 기록을 모두 삭제하시겠습니까?",
-    "welcome": "여행 관련 질문을 해보세요!\n장소를 저장하면 여행 계획을 도와드립니다.",
-    "hint": "현재 검색된 {{count}}개의 장소에 대해 물어보세요.",
+    "welcome": "여행 관련 질문을 해보세요!\n저장된 장소를 기반으로 여행 계획을 도와드려요.",
+    "hint": "현재 검색된 {{count}}개의 장소 추천에 대해 물어보세요.",
     "error": "죄송합니다. 일시적인 오류가 발생했습니다. 잠시 후 다시 시도해주세요."
   },
   "place": {
-    "save": "저장",
+    "save": "장소 저장하기",
     "saved": "저장됨",
     "reviews": "리뷰",
     "reviewCount": "개 리뷰",
@@ -83,6 +84,9 @@
   "route": {
     "clearRoute": "경로 지우기"
   },
+  "map": {
+    "clearLastViewed": "선택 장소 해제하기"
+  },
   "welcome": {
     "title": "Travel Map에 오신 것을 환영합니다!",
     "subtitle": "AI 기반 여행 경로 계획 추천 서비스",
@@ -92,6 +96,7 @@
     "feature3": "AI 여행 에이전트: 출발지, 출발시간, 기간 등을 알려주면 저장된 장소를 기반으로 더 빠르고 정확한 여행 계획과 추천 그리고 경로를 지도에 표시합니다.",
     "settingsTitle": "초기 설정",
     "feature4": "검색 반경과 최소 평점을 설정하면 검색 결과를 설정에 맞춰 보여줍니다.",
+    "helpText": "앱 소개를 다시 보고 싶다면 좌측 하단의 앱 소개 및 설정 버튼을 눌러주세요.",
     "startButton": "시작하기"
   }
 }

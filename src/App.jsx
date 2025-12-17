@@ -127,6 +127,7 @@ function App() {
   const [currentLocation, setCurrentLocation] = useState(null)
   const [mapCenter, setMapCenter] = useState(null) // 지도 중심 좌표 상태 추가
   const [selectedPlace, setSelectedPlace] = useState(null) // 선택된 장소 상태 추가
+  const [lastViewedPlace, setLastViewedPlace] = useState(null) // 마지막으로 상세보기를 한 장소
   const [routePaths, setRoutePaths] = useState([]) // 여행 경로 데이터 (polyline 배열)
   // 사용자가 저장한 장소 목록 (localStorage 연동)
   const [savedPlaces, setSavedPlaces] = useState(() => {
@@ -218,19 +219,24 @@ function App() {
         if (placeDetails) {
           console.log('✅ 상세 정보 로드 성공:', placeDetails)
           // 기존 place 정보와 상세 정보를 병합
-          setSelectedPlace({ ...place, ...placeDetails })
+          const mergedPlace = { ...place, ...placeDetails }
+          setSelectedPlace(mergedPlace)
+          setLastViewedPlace(mergedPlace) // 마지막으로 상세보기를 한 장소로 설정
         } else {
           // 상세 정보가 없으면 기본 정보 사용
           setSelectedPlace(place)
+          setLastViewedPlace(place) // 마지막으로 상세보기를 한 장소로 설정
         }
       } catch (error) {
         console.error('상세 정보 가져오기 실패:', error)
         // 에러가 발생해도 기본 정보로 표시
         setSelectedPlace(place)
+        setLastViewedPlace(place) // 마지막으로 상세보기를 한 장소로 설정
       }
     } else {
       // ID가 없으면 기본 정보만 사용
       setSelectedPlace(place)
+      setLastViewedPlace(place) // 마지막으로 상세보기를 한 장소로 설정
     }
   }
 
@@ -705,6 +711,7 @@ function App() {
             currentLocation={currentLocation}
               center={mapCenter} // 지도 중심 좌표 전달
               selectedPlace={selectedPlace} // 선택된 장소 전달
+              lastViewedPlace={lastViewedPlace} // 마지막으로 상세보기를 한 장소 전달
               onSelectPlace={handleSelectPlace} // 선택 핸들러 전달 (상세 정보 포함)
               onCenterChange={setMapCenter} // 지도 중심이 변경될 때 상태 업데이트
               isChatOpen={isChatOpen} // 채팅창 열림 상태 전달
@@ -719,6 +726,17 @@ function App() {
             >
               {isGettingLocation ? '...' : '📍'}
           </button>
+
+          {/* 마지막으로 본 장소 해제 버튼 */}
+          {lastViewedPlace && (
+            <button
+              className={`clear-last-viewed-button ${isChatOpen ? 'chat-open' : ''}`}
+              onClick={() => setLastViewedPlace(null)}
+              title={t('map.clearLastViewed')}
+            >
+              ✕
+            </button>
+          )}
 
           {locationError && (
             <div className="location-error-message">

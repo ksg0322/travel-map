@@ -72,6 +72,7 @@ const WelcomeModal = ({
                 >
                   <span className="welcome-language-flag">{currentLang.flag}</span>
                   <span className="welcome-language-name">{currentLang.name}</span>
+                  <span className="welcome-language-dropdown-icon">▼</span>
                 </button>
                 {showLanguageMenu && (
                   <div className="welcome-language-menu">
@@ -128,6 +129,7 @@ const WelcomeModal = ({
             <button className="welcome-start-button" onClick={handleStart}>
               {t('welcome.startButton')}
             </button>
+            <p className="welcome-help-text"> ◀ {t('welcome.helpText')}</p>
           </div>
         </div>
       </div>

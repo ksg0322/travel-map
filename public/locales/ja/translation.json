@@ -26,9 +26,10 @@
     "language": "言語",
     "radius": "検索半径",
     "minRating": "最低評価",
-    "unit": "m",
+    "unit": "評価",
     "savedPlaces": "保存された場所",
-    "noSavedPlaces": "保存された場所がありません。"
+    "noSavedPlaces": "保存された場所がありません。",
+    "appInfo": "アプリ紹介と設定"
   },
   "search": {
     "placeholder": "場所検索 (例: レストラン, ホテル, 観光地)",
@@ -83,6 +84,9 @@
   "route": {
     "clearRoute": "ルートをクリア"
   },
+  "map": {
+    "clearLastViewed": "選択した場所の表示を解除"
+  },
   "welcome": {
     "title": "Travel Mapへようこそ！",
     "subtitle": "AIベースの旅行ルート計画推奨サービス",
@@ -92,6 +96,7 @@
     "feature3": "AI旅行エージェント: 出発地、出発時間、期間などを教えると、保存された場所を基準により速く正確な旅行計画と推奨、そしてルートが地図に表示されます。",
     "settingsTitle": "初期設定",
     "feature4": "検索半径と最低評価を設定すると、検索結果が設定に合わせて表示されます。",
+    "helpText": "説明を再度確認したい場合は、左下のアプリ紹介と設定ボタンをクリックしてください。",
     "startButton": "始める"
   }
 }

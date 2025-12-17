@@ -25,10 +25,11 @@
     "settings": "设置",
     "language": "语言",
     "radius": "搜索半径",
-    "minRating": "最低评分",
-    "unit": "m",
+    "minRating": "最低评级",
+    "unit": "评级",
     "savedPlaces": "已保存地点",
-    "noSavedPlaces": "没有已保存的地点。"
+    "noSavedPlaces": "没有已保存的地点。",
+    "appInfo": "应用介绍和设置"
   },
   "search": {
     "placeholder": "搜索地点 (例如: 餐馆, 酒店, 景点)",
@@ -83,6 +84,9 @@
   "route": {
     "clearRoute": "清除路线"
   },
+  "map": {
+    "clearLastViewed": "清除选定地点"
+  },
   "welcome": {
     "title": "欢迎使用 Travel Map！",
     "subtitle": "基于AI的旅行路线规划推荐服务",
@@ -92,6 +96,7 @@
     "feature3": "AI旅行代理：提供您的出发地、出发时间、行程时长等信息，即可基于保存的地点获得更快更准确的旅行计划、推荐以及在地图上显示的路线。",
     "settingsTitle": "初始设置",
     "feature4": "设置搜索半径和最低评分，搜索结果将根据您的设置显示。",
+    "helpText": "如果想再次查看说明，请点击左下角的应用介绍和设置按钮。",
     "startButton": "开始"
   }
 }

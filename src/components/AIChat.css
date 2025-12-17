@@ -55,7 +55,7 @@
 }
 
 .chat-title {
-  margin: 0;
+  margin: 0 0 0 10px;
   font-size: 20px;
   font-weight: 500;
   color: #d86262;
@@ -71,7 +71,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #FF6B6B; /* Coral */
+  color: #d86262; /* Coral */
   transition: all 0.2s;
 }
 
@@ -101,7 +101,7 @@
 
 .chat-empty p {
   margin: 0;
-  font-size: 16px;
+  font-size: 15px;
   text-align: center;
   padding: 0 10px;
 }

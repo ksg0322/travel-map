@@ -56,11 +56,13 @@ const Sidebar = ({
           <h3>{t('app.title')}</h3>
         </div>
 
+        <div className="sidebar-divider"></div>
+
         <div className="sidebar-section">
           <h4>{t('sidebar.settings')}</h4>
           
           <div className="setting-item">
-            <label>{t('sidebar.minRating')}: {minRating}</label>
+            <label>{t('sidebar.minRating')} : {minRating} {t('sidebar.unit')}</label>
             <input 
               type="range" 
               min="0.5" 
@@ -72,7 +74,7 @@ const Sidebar = ({
           </div>
 
           <div className="setting-item">
-            <label>{t('sidebar.radius')}: {radius}{t('sidebar.unit')}</label>
+            <label>{t('sidebar.radius')} : {radius}m</label>
             <input 
               type="range" 
               min="500" 
@@ -114,7 +116,7 @@ const Sidebar = ({
               <span className="button-text">{t('sidebar.savedPlaces')} ({savedCount})</span>
             </div>
         </button>
-
+        
         {/* 언어 설정 버튼 */}
         <div className="language-menu-container">
           <button 
@@ -125,6 +127,7 @@ const Sidebar = ({
               <div className="button-content">
             <span className="language-flag">{currentLang.flag}</span>
                 <span className="button-text">{currentLang.name}</span>
+                <span className="language-dropdown-icon">▼</span>
               </div>
           </button>
 
@@ -149,7 +152,7 @@ const Sidebar = ({
           <button 
             className="sidebar-button welcome-button"
             onClick={onWelcomeClick}
-            title="앱 소개 및 설정"
+            title={t('sidebar.appInfo')}
           >
             <div className="button-content">
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -157,7 +160,7 @@ const Sidebar = ({
                 <path d="M12 16V12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                 <path d="M12 8H12.01" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
-              <span className="button-text">앱 소개</span>
+              <span className="button-text">{t('sidebar.appInfo')}</span>
             </div>
           </button>
         </div>
