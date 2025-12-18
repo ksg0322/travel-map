@@ -94,7 +94,7 @@ const WelcomeModal = ({
             {/* 최소 평점 설정 */}
             <div className="welcome-setting-item">
               <label className="welcome-setting-label">
-                {t('sidebar.minRating')}: {minRating}
+                {t('sidebar.minRating')} : {minRating} {t('sidebar.unit')}
               </label>
               <input 
                 type="range" 
@@ -111,7 +111,7 @@ const WelcomeModal = ({
             {/* 검색 반경 설정 */}
             <div className="welcome-setting-item">
               <label className="welcome-setting-label">
-                {t('sidebar.radius')}: {radius}{t('sidebar.unit')}
+                {t('sidebar.radius')} : {radius}m
               </label>
               <input 
                 type="range" 
