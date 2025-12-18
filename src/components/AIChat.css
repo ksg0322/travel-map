@@ -80,6 +80,31 @@
   color: #FF6B6B; /* Coral */
 }
 
+.chat-header-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.chat-clear-button {
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #5f6368;
+  border-radius: 50%;
+  transition: all 0.2s;
+}
+
+.chat-clear-button:hover {
+  background-color: #f1f3f4;
+  color: #202124;
+}
+
 .chat-messages {
   flex: 1;
   overflow-y: auto;
@@ -97,6 +122,11 @@
   height: 100%;
   color: #FF6B6B; /* Light Coral */
   gap: 10px;
+}
+
+.chat-welcome-text {
+  white-space: pre-line;
+  text-align: center;
 }
 
 .chat-empty p {

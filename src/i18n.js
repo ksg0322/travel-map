@@ -34,11 +34,6 @@ i18n
       order: ['localStorage', 'navigator'],
       caches: ['localStorage'], // localStorage에 언어 설정 저장
     },
-
-    // React Suspense 비활성화 옵션 제거 (Suspense 사용 권장)
-    // react: {
-    //   useSuspense: false
-    // }
   });
 
 export default i18n;

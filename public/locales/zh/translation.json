@@ -69,7 +69,14 @@
     "phone": "电话",
     "website": "网站",
     "delete": "删除",
-    "deleteConfirm": "确定要删除此地点吗？"
+    "deleteConfirm": "确定要删除此地点吗？",
+    "price": {
+      "free": "免费",
+      "inexpensive": "便宜",
+      "moderate": "中等",
+      "expensive": "昂贵",
+      "veryExpensive": "非常昂贵"
+    }
   },
   "database": {
     "type": "类型",

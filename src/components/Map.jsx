@@ -1,5 +1,5 @@
 import { Map as GoogleMap, AdvancedMarker, useMap } from '@vis.gl/react-google-maps'
-import { useCallback, useRef, useEffect, useState } from 'react'
+import { useRef, useEffect } from 'react'
 import './Map.css'
 
 // 지도 제어용 내부 컴포넌트
@@ -163,8 +163,6 @@ const Map = ({ language, searchResults = [], currentLocation = null, center = nu
     return lat && lng ? { lat, lng } : null;
   }
 
-  const selectedPosition = getPlacePosition(selectedPlace);
-
   return (
     <div className={`map-wrapper ${isChatOpen ? 'chat-open' : ''}`}>
       <GoogleMap
@@ -196,10 +194,10 @@ const Map = ({ language, searchResults = [], currentLocation = null, center = nu
               displayName: { text: '장소 정보 불러오는 중...' } // 임시 이름
             }
             
-            if (onSelectPlace) onSelectPlace(poiPlace)
+            onSelectPlace?.(poiPlace)
           } else {
             // 지도 빈 공간 클릭 시 선택 해제
-            if (onSelectPlace) onSelectPlace(null)
+            onSelectPlace?.(null)
           }
         }}
       >
@@ -305,9 +303,6 @@ const Map = ({ language, searchResults = [], currentLocation = null, center = nu
           const lastViewedPosition = getPlacePosition(lastViewedPlace);
           if (!lastViewedPosition) return null;
           
-          // 검색 결과에 포함되어 있지 않은 경우에만 별도로 표시
-          const isInSearchResults = searchResults.some(place => place.id === lastViewedPlace.id);
-          
           return (
             <AdvancedMarker
               key={`last-viewed-${lastViewedPlace.id}`}
@@ -342,10 +337,7 @@ const Map = ({ language, searchResults = [], currentLocation = null, center = nu
               key={place.id || `place-${index}`}
               position={position}
               title={place.displayName?.text || place.displayName || '장소'}
-              onClick={(e) => {
-                // 이벤트 전파 중단은 AdvancedMarker에서 자동으로 처리되지 않을 수 있음
-                if (onSelectPlace) onSelectPlace(place);
-              }}
+              onClick={() => onSelectPlace?.(place)}
               zIndex={isLastViewed ? 150 : 100} // 마지막으로 본 장소는 위에 표시
             >
               <img 

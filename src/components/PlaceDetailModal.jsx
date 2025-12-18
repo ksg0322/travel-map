@@ -3,8 +3,33 @@ import './PlaceDetailModal.css'
 
 const PlaceDetailModal = ({ place, onClose, onSave, isSaved = false }) => {
   const { t } = useTranslation()
-  
+
   if (!place) return null
+
+  // 가격 레벨 번역
+  const getPriceLevelText = (priceLevel) => {
+    const priceMap = {
+      'PRICE_LEVEL_FREE': t('place.price.free'),
+      'PRICE_LEVEL_INEXPENSIVE': t('place.price.inexpensive'),
+      'PRICE_LEVEL_MODERATE': t('place.price.moderate'),
+      'PRICE_LEVEL_EXPENSIVE': t('place.price.expensive'),
+      'PRICE_LEVEL_VERY_EXPENSIVE': t('place.price.veryExpensive')
+    }
+    return priceMap[priceLevel] || priceLevel
+  }
+
+  // 타입 아이콘과 번역 가져오기
+  const getTypeDisplay = (type) => {
+    const typeMap = {
+      'Hotel': { icon: '🏨', text: t('search.categories.hotel') },
+      'Restaurant': { icon: '🍴', text: t('search.categories.restaurant') },
+      'Tourist attraction': { icon: '⭐', text: t('search.categories.tourist attraction') }
+    }
+    return typeMap[type] || { icon: '', text: type }
+  }
+
+  const hours = place.currentOpeningHours || place.openingHours
+  const typeDisplay = place.type && place.type !== 'Place' ? getTypeDisplay(place.type) : null
 
   return (
     <div className="place-detail-modal-overlay" onClick={onClose}>
@@ -43,26 +68,14 @@ const PlaceDetailModal = ({ place, onClose, onSave, isSaved = false }) => {
 
             {place.priceLevel && (
               <span className="place-detail-price">
-                💰 {place.priceLevel === 'PRICE_LEVEL_FREE' ? '무료' :
-                     place.priceLevel === 'PRICE_LEVEL_INEXPENSIVE' ? '저렴함' :
-                     place.priceLevel === 'PRICE_LEVEL_MODERATE' ? '보통' :
-                     place.priceLevel === 'PRICE_LEVEL_EXPENSIVE' ? '비쌈' :
-                     place.priceLevel === 'PRICE_LEVEL_VERY_EXPENSIVE' ? '매우 비쌈' :
-                     place.priceLevel}
+                💰 {getPriceLevelText(place.priceLevel)}
               </span>
             )}
 
-            {place.type && place.type !== 'Place' && (
+            {typeDisplay && (typeDisplay.icon || typeDisplay.text) && (
               <span className="place-detail-type">
-                {place.type === 'Hotel' ? '🏨 ' :
-                 place.type === 'Restaurant' ? '🍴 ' :
-                 place.type === 'Tourist attraction' ? '⭐ ' : ''}
-                {
-                  place.type === 'Hotel' ? t('search.categories.hotel') :
-                  place.type === 'Restaurant' ? t('search.categories.restaurant') :
-                  place.type === 'Tourist attraction' ? t('search.categories.tourist attraction') :
-                  place.type
-                }
+                {typeDisplay.icon && `${typeDisplay.icon} `}
+                {typeDisplay.text}
               </span>
             )}
           </div>
@@ -75,27 +88,20 @@ const PlaceDetailModal = ({ place, onClose, onSave, isSaved = false }) => {
             </p>
           )}
 
-          {(place.currentOpeningHours || place.openingHours) && (
+          {hours && (
             <div className="place-detail-hours">
-              {(() => {
-                const hours = place.currentOpeningHours || place.openingHours
-                return (
-                  <>
-                    {hours.openNow !== undefined && (
-                      <p className="place-detail-open-now">
-                        {hours.openNow ? `🟢 ${t('place.openNow')}` : `🔴 ${t('place.closed')}`}
-                      </p>
-                    )}
-                    {hours.weekdayDescriptions && hours.weekdayDescriptions.length > 0 && (
-                      <div className="place-detail-weekday">
-                        {hours.weekdayDescriptions.map((desc, idx) => (
-                          <p key={idx} className="place-detail-weekday-item">{desc}</p>
-                        ))}
-                      </div>
-                    )}
-                  </>
-                )
-              })()}
+              {hours.openNow !== undefined && (
+                <p className="place-detail-open-now">
+                  {hours.openNow ? `🟢 ${t('place.openNow')}` : `🔴 ${t('place.closed')}`}
+                </p>
+              )}
+              {hours.weekdayDescriptions && hours.weekdayDescriptions.length > 0 && (
+                <div className="place-detail-weekday">
+                  {hours.weekdayDescriptions.map((desc, idx) => (
+                    <p key={idx} className="place-detail-weekday-item">{desc}</p>
+                  ))}
+                </div>
+              )}
             </div>
           )}
 
@@ -142,5 +148,4 @@ const PlaceDetailModal = ({ place, onClose, onSave, isSaved = false }) => {
 }
 
 export default PlaceDetailModal
-
 

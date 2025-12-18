@@ -1,6 +1,9 @@
 // Google Places API 서비스
 const API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || ''
 
+// FieldMask 상수
+const COMMON_FIELD_MASK = 'places.id,places.displayName,places.formattedAddress,places.location,places.rating,places.userRatingCount,places.priceLevel,places.types'
+
 /**
  * Google Maps 라이브러리가 로드되었는지 확인하는 헬퍼 함수
  */
@@ -12,7 +15,27 @@ const checkGoogleMapsLoaded = () => {
 }
 
 /**
- * 장소 텍스트 검색 (좌표 찾기용) - Places API (New) 사용 유지 (CORS 문제 없음)
+ * 좌표를 숫자로 변환하는 헬퍼 함수
+ */
+const toLatLng = (coord) => {
+  return {
+    lat: typeof coord.lat === 'function' ? coord.lat() : Number(coord.lat),
+    lng: typeof coord.lng === 'function' ? coord.lng() : Number(coord.lng)
+  }
+}
+
+/**
+ * 위치 객체에서 좌표 추출 헬퍼 함수
+ */
+const extractCoordinates = (location) => {
+  return {
+    latitude: location.latitude || location.lat,
+    longitude: location.longitude || location.lng
+  }
+}
+
+/**
+ * 장소 텍스트 검색 (좌표 찾기용)
  * @param {string} query - 검색어
  * @returns {Promise<Object>} 장소의 위치 정보 { lat, lng }
  */
@@ -36,6 +59,12 @@ export const searchLocationCoordinates = async (query) => {
       },
       body: JSON.stringify(requestBody)
     })
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}))
+      console.error('위치 검색 오류:', errorData)
+      return null
+    }
 
     const data = await response.json()
     if (data.places && data.places.length > 0) {
@@ -73,10 +102,7 @@ export const autocompletePlaces = async (input, location = null, language = 'ko'
     if (location && location.lat && location.lng) {
       requestBody.locationBias = {
         circle: {
-          center: {
-            latitude: location.lat,
-            longitude: location.lng
-          },
+          center: extractCoordinates(location),
           radius: 50000 // 50km 반경
         }
       }
@@ -127,10 +153,7 @@ export const searchCategoryPlaces = async (categoryQuery, center, radius, minRat
       languageCode: language,
       locationBias: {
         circle: {
-          center: {
-            latitude: center.latitude || center.lat,
-            longitude: center.longitude || center.lng
-          },
+          center: extractCoordinates(center),
           radius: radius
         }
       },
@@ -142,7 +165,7 @@ export const searchCategoryPlaces = async (categoryQuery, center, radius, minRat
       headers: {
         'Content-Type': 'application/json',
         'X-Goog-Api-Key': API_KEY,
-        'X-Goog-FieldMask': 'places.id,places.displayName,places.formattedAddress,places.location,places.rating,places.userRatingCount,places.priceLevel,places.websiteUri,places.googleMapsUri,places.types'
+        'X-Goog-FieldMask': `${COMMON_FIELD_MASK},places.websiteUri,places.googleMapsUri`
       },
       body: JSON.stringify(requestBody)
     })
@@ -169,10 +192,7 @@ export const searchCategoryPlaces = async (categoryQuery, center, radius, minRat
  * @returns {Promise<Array>} 검색 결과 배열
  */
 export const searchPlaces = async (query, location = null, language, radius) => {
-  if (!API_KEY) {
-    console.error('Google Maps API 키가 설정되지 않았습니다.')
-    return []
-  }
+  if (!API_KEY) return []
 
   try {
     // Places API (New) Text Search 사용
@@ -202,7 +222,7 @@ export const searchPlaces = async (query, location = null, language, radius) => 
       headers: {
         'Content-Type': 'application/json',
         'X-Goog-Api-Key': API_KEY,
-        'X-Goog-FieldMask': 'places.id,places.displayName,places.formattedAddress,places.location,places.rating,places.userRatingCount,places.priceLevel,places.types'
+        'X-Goog-FieldMask': COMMON_FIELD_MASK
       },
       body: JSON.stringify(requestBody)
     })
@@ -224,7 +244,6 @@ export const searchPlaces = async (query, location = null, language, radius) => 
     }
 
     const data = await response.json()
-    console.log('Places API 응답:', data)
     return data.places || []
   } catch (error) {
     console.error('장소 검색 오류:', error)
@@ -241,10 +260,7 @@ export const searchPlaces = async (query, location = null, language, radius) => 
  * @returns {Promise<Array>} 검색 결과 배열
  */
 export const searchNearbyPlaces = async (query, location, radius, language) => {
-  if (!API_KEY) {
-    console.error('Google Maps API 키가 설정되지 않았습니다.')
-    return []
-  }
+  if (!API_KEY) return []
 
   try {
     const url = new URL('https://places.googleapis.com/v1/places:searchNearby')
@@ -254,10 +270,7 @@ export const searchNearbyPlaces = async (query, location, radius, language) => {
       maxResultCount: 10,
       locationRestriction: {
         circle: {
-          center: {
-            latitude: location.lat,
-            longitude: location.lng
-          },
+          center: extractCoordinates(location),
           radius: radius
         }
       },
@@ -274,7 +287,7 @@ export const searchNearbyPlaces = async (query, location, radius, language) => {
       headers: {
         'Content-Type': 'application/json',
         'X-Goog-Api-Key': API_KEY,
-        'X-Goog-FieldMask': 'places.id,places.displayName,places.formattedAddress,places.location,places.rating,places.userRatingCount,places.priceLevel,places.types'
+        'X-Goog-FieldMask': COMMON_FIELD_MASK
       },
       body: JSON.stringify(requestBody)
     })
@@ -300,10 +313,7 @@ export const searchNearbyPlaces = async (query, location, radius, language) => {
  * @returns {Promise<Object>} 장소 상세 정보
  */
 export const getPlaceDetails = async (placeId, language) => {
-  if (!API_KEY) {
-    console.error('Google Maps API 키가 설정되지 않았습니다.')
-    return null
-  }
+  if (!API_KEY) return null
 
   try {
     // languageCode를 쿼리 파라미터로 추가
@@ -346,7 +356,6 @@ export const getPlaceDetails = async (placeId, language) => {
     }
 
     const data = await response.json()
-    console.log('장소 상세 정보:', data)
     return data
   } catch (error) {
     console.error('장소 상세 정보 조회 오류:', error)
@@ -366,7 +375,7 @@ export const geocodeAddress = async (address, language = 'ko') => {
     return null
   }
 
-  return new Promise((resolve, reject) => {
+  return new Promise((resolve) => {
     const geocoder = new window.google.maps.Geocoder()
     geocoder.geocode({ address: address, language: language }, (results, status) => {
       if (status === 'OK' && results && results.length > 0) {
@@ -400,7 +409,7 @@ export const reverseGeocode = async (lat, lng, language = 'ko') => {
     return null
   }
 
-  return new Promise((resolve, reject) => {
+  return new Promise((resolve) => {
     const geocoder = new window.google.maps.Geocoder()
     const latlng = { lat: parseFloat(lat), lng: parseFloat(lng) }
     
@@ -438,18 +447,12 @@ export const getDirections = async (origin, destination, travelMode = 'DRIVING',
     return null
   }
 
-  return new Promise((resolve, reject) => {
+  return new Promise((resolve) => {
     const directionsService = new window.google.maps.DirectionsService()
     
-    // 좌표값을 숫자로 확실하게 변환하여 LatLngLiteral 객체 사용
-    const originLat = typeof origin.lat === 'function' ? origin.lat() : Number(origin.lat)
-    const originLng = typeof origin.lng === 'function' ? origin.lng() : Number(origin.lng)
-    const destLat = typeof destination.lat === 'function' ? destination.lat() : Number(destination.lat)
-    const destLng = typeof destination.lng === 'function' ? destination.lng() : Number(destination.lng)
-
     const request = {
-      origin: { lat: originLat, lng: originLng },
-      destination: { lat: destLat, lng: destLng },
+      origin: toLatLng(origin),
+      destination: toLatLng(destination),
       travelMode: window.google.maps.TravelMode[travelMode] || window.google.maps.TravelMode.DRIVING,
       language: language
     }
@@ -502,22 +505,12 @@ export const getDistanceMatrix = async (origins, destinations, travelMode = 'DRI
     return null
   }
 
-  return new Promise((resolve, reject) => {
+  return new Promise((resolve) => {
     const service = new window.google.maps.DistanceMatrixService()
     
-    // 좌표값을 숫자로 확실하게 변환하여 LatLngLiteral 객체 사용
-    const originLocs = origins.map(o => ({
-      lat: typeof o.lat === 'function' ? o.lat() : Number(o.lat),
-      lng: typeof o.lng === 'function' ? o.lng() : Number(o.lng)
-    }))
-    const destLocs = destinations.map(d => ({
-      lat: typeof d.lat === 'function' ? d.lat() : Number(d.lat),
-      lng: typeof d.lng === 'function' ? d.lng() : Number(d.lng)
-    }))
-
     service.getDistanceMatrix({
-      origins: originLocs,
-      destinations: destLocs,
+      origins: origins.map(toLatLng),
+      destinations: destinations.map(toLatLng),
       travelMode: window.google.maps.TravelMode[travelMode] || window.google.maps.TravelMode.DRIVING,
       language: language
     }, (response, status) => {
@@ -528,7 +521,7 @@ export const getDistanceMatrix = async (origins, destinations, travelMode = 'DRI
             if (element.status === 'OK') {
               results.push({
                 originIndex,
-                destinationIndex: destIndex, // 오타 수정 (destinationIndex)
+                destinationIndex: destIndex,
                 origin: origins[originIndex],
                 destination: destinations[destIndex],
                 distance: {

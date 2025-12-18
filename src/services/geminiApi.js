@@ -13,7 +13,6 @@ const API_KEY = import.meta.env.VITE_GEMINI_API_KEY || import.meta.env.VITE_GOOG
  */
 export const selectAgent = async (message, conversationHistory = [], language) => {
   if (!API_KEY) {
-    console.error('Gemini API 키가 설정되지 않았습니다.')
     return { agent: 'communicator', reason: 'API 키 없음으로 기본 역할 사용' }
   }
 
@@ -114,11 +113,69 @@ export const selectAgent = async (message, conversationHistory = [], language) =
 }
 
 /**
+ * 언어 코드를 텍스트로 변환하는 헬퍼 함수
+ */
+const getLanguageText = (language) => {
+  const langMap = {
+    'en': 'English',
+    'ja': '日本語',
+    'zh': '中文',
+    'ko': '한국어'
+  }
+  return langMap[language] || '한국어'
+}
+
+/**
+ * 위치 정보 포맷팅 헬퍼 함수
+ */
+const formatLocationInfo = (location, label) => {
+  if (!location?.lat && !location?.lng) return null
+  const info = location.address 
+    ? `위치: ${location.address} (좌표: ${location.lat.toFixed(6)}, ${location.lng.toFixed(6)})`
+    : `위치 좌표: ${location.lat.toFixed(6)}, ${location.lng.toFixed(6)}`
+  return `[${label}]\n${info}`
+}
+
+/**
+ * 위치 객체에서 좌표 추출 헬퍼 함수 (lat/lng 형식)
+ */
+const getPlaceCoordinates = (place) => {
+  if (!place?.location) return null
+  return {
+    lat: place.location.latitude || place.location.lat,
+    lng: place.location.longitude || place.location.lng
+  }
+}
+
+/**
+ * 장소 정보 포맷팅 헬퍼 함수
+ */
+const formatPlaceInfo = (place, index) => {
+  return `${index + 1}. ${place.displayName?.text || place.displayName} (타입: ${place.type || '장소'}, 평점: ${place.rating || '없음'}, 리뷰수: ${place.userRatingCount || '0'}, 주소: ${place.formattedAddress})`
+}
+
+/**
+ * 위치 객체에 주소가 없으면 역지오코딩으로 보강하는 헬퍼 함수
+ */
+const enrichLocationWithAddress = async (location, language) => {
+  if (!location?.lat || !location?.lng || location.address) return location
+  
+  try {
+    const addressInfo = await reverseGeocode(location.lat, location.lng, language)
+    if (addressInfo) {
+      location.address = addressInfo.formattedAddress
+    }
+  } catch (e) {
+    console.warn('Reverse Geocoding Failed:', e)
+  }
+  return location
+}
+
+/**
  * Agent별 System Prompt 생성 함수들
  */
 const getPlannerSystemPrompt = (language, contextPrompt) => {
-  // 언어 코드 매핑을 명확히 하고, 알 수 없는 경우 기본값을 한국어로 설정
-  const langText = language === 'en' ? 'English' : language === 'ja' ? '日本語' : language === 'zh' ? '中文' : '한국어'
+  const langText = getLanguageText(language)
   
   return `당신은 여행 계획 전문가(Planner)입니다. 
 제공된 Travel Map의 저장된 장소 목록을 기반으로 최고의 여행 일정을 만들어주세요.
@@ -150,7 +207,7 @@ const getPlannerSystemPrompt = (language, contextPrompt) => {
 }
 
 const getCommunicatorSystemPrompt = (language, contextPrompt) => {
-  const langText = language === 'en' ? 'English' : language === 'ja' ? '日本語' : language === 'zh' ? '中文' : '한국어'
+  const langText = getLanguageText(language)
   
   return `당신은 친절한 여행 가이드(Communicator)입니다.
 사용자와 자연스럽게 대화하고, 질문에 답변하며, 진행 상황을 친절하게 보고합니다.
@@ -175,7 +232,7 @@ const getCommunicatorSystemPrompt = (language, contextPrompt) => {
 }
 
 const getSearchAgentSystemPrompt = (language, contextPrompt) => {
-  const langText = language === 'en' ? 'English' : language === 'ja' ? '日本語' : language === 'zh' ? '中文' : '한국어'
+  const langText = getLanguageText(language)
   
   return `당신은 장소 정보 제공 전문가(Search Agent)입니다.
 사용자의 요구사항을 분석하여 검색 결과를 바탕으로 장소를 추천합니다.
@@ -210,33 +267,21 @@ const buildContextPrompt = (currentLocation, mapCenter, savedPlaces, searchResul
   let contextParts = []
   
   // 현재 위치 정보
-  if (currentLocation && currentLocation.lat && currentLocation.lng) {
-    const locationInfo = currentLocation.address 
-      ? `위치: ${currentLocation.address} (좌표: ${currentLocation.lat.toFixed(6)}, ${currentLocation.lng.toFixed(6)})`
-      : `위치 좌표: ${currentLocation.lat.toFixed(6)}, ${currentLocation.lng.toFixed(6)}`
-    contextParts.push(`[현재 나의 위치]\n${locationInfo}`)
-  }
+  const currentLocationInfo = formatLocationInfo(currentLocation, '현재 나의 위치')
+  if (currentLocationInfo) contextParts.push(currentLocationInfo)
 
   // 지도 중심 정보
-  if (mapCenter && mapCenter.lat && mapCenter.lng) {
-    const centerInfo = mapCenter.address
-      ? `위치: ${mapCenter.address} (좌표: ${mapCenter.lat.toFixed(6)}, ${mapCenter.lng.toFixed(6)})`
-      : `위치 좌표: ${mapCenter.lat.toFixed(6)}, ${mapCenter.lng.toFixed(6)}`
-    contextParts.push(`[현재 보고 있는 지도 중심]\n${centerInfo}`)
-  }
+  const mapCenterInfo = formatLocationInfo(mapCenter, '현재 보고 있는 지도 중심')
+  if (mapCenterInfo) contextParts.push(mapCenterInfo)
   
   if (savedPlaces && savedPlaces.length > 0) {
-    const savedPlacesInfo = savedPlaces.map((place, index) => 
-      `${index + 1}. ${place.displayName?.text || place.displayName} (타입: ${place.type || '장소'}, 평점: ${place.rating || '없음'}, 리뷰수: ${place.userRatingCount || '0'}, 주소: ${place.formattedAddress})`
-    ).join('\n')
+    const savedPlacesInfo = savedPlaces.map(formatPlaceInfo).join('\n')
     contextParts.push(`[저장된 장소 목록]\n${savedPlacesInfo}\n이 장소들을 활용하여 일정을 제안하거나 경로를 계획할 수 있습니다.`)
   }
   
   // Planner는 검색 결과를 사용하지 않음 (저장된 장소와 실제 현재 위치만 사용)
   if (agentType !== 'planner' && searchResults && searchResults.length > 0) {
-    const placesInfo = searchResults.map((place, index) => 
-      `${index + 1}. ${place.displayName?.text || place.displayName} (타입: ${place.type || '장소'}, 평점: ${place.rating || '없음'}, 리뷰수: ${place.userRatingCount || '0'}, 주소: ${place.formattedAddress})`
-    ).join('\n')
+    const placesInfo = searchResults.map(formatPlaceInfo).join('\n')
     contextParts.push(`[현재 검색 결과 장소들]\n${placesInfo}`)
   }
   
@@ -319,8 +364,6 @@ export const getPlannerResponse = async (
   radius,
   minRating,
 ) => {
-  console.log('[Planner] getPlannerResponse 호출됨')
-  
   try {
     // 1. 정보 확인 (데이터 준비)
     let placesWithLocation = []
@@ -339,17 +382,16 @@ export const getPlannerResponse = async (
 
     // 저장된 장소들 추가
     if (savedPlaces && savedPlaces.length >= 1) {
-      const validSavedPlaces = savedPlaces.filter(place => place.location && (place.location.latitude || place.location.lat))
+      const validSavedPlaces = savedPlaces.filter(place => getPlaceCoordinates(place))
       placesWithLocation = [...placesWithLocation, ...validSavedPlaces]
     }
     
-    let coordinates = []
+    // 좌표 배열 생성 (필요시)
+    const coordinates = placesWithLocation.length >= 2 
+      ? placesWithLocation.map(place => getPlaceCoordinates(place)).filter(Boolean)
+      : []
     
-    if (placesWithLocation.length >= 2) {
-      coordinates = placesWithLocation.map(place => ({
-        lat: place.location.latitude || place.location.lat,
-        lng: place.location.longitude || place.location.lng
-      }))
+    if (coordinates.length >= 2) {
       console.log(`[Planner] 계획 가능한 장소: ${placesWithLocation.length}개`)
     }
 
@@ -361,10 +403,7 @@ export const getPlannerResponse = async (
     if (placesWithLocation.length >= 2 && placesWithLocation.length <= 10) {
       try {
         console.log('[Planner] Distance Matrix 계산 시작')
-        const locations = placesWithLocation.map(p => ({
-            lat: p.location.latitude || p.location.lat,
-            lng: p.location.longitude || p.location.lng
-        }));
+        const locations = placesWithLocation.map(getPlaceCoordinates).filter(Boolean)
         
         // DRIVING 모드로 이동 시간 계산 (가장 보편적인 기준)
         const matrixResults = await getDistanceMatrix(locations, locations, 'DRIVING', language);
@@ -392,13 +431,18 @@ export const getPlannerResponse = async (
     }
 
     // 대화 내역 포맷팅
-    const historyText = conversationHistory.map(msg => `${msg.role}: ${msg.content}`).join('\n');
+    const historyText = conversationHistory.map(msg => 
+      `${msg.sender === 'user' ? '사용자' : 'AI'}: ${msg.text}`
+    ).join('\n');
 
     // AI에게 순서만 JSON으로 요청 (시스템 프롬프트 직접 작성)
     const planningPrompt = `당신은 여행 계획 전문가입니다. 주어진 장소들의 좌표와 이동 시간을 확인하고, 가장 효율적인 이동 동선이 되도록 방문 순서를 결정해주세요.
     
     장소 목록 (인덱스: 장소명 [위도, 경도]):
-${placesWithLocation.map((p, i) => `${i}: ${p.displayName?.text || p.displayName} [${p.location.latitude || p.location.lat}, ${p.location.longitude || p.location.lng}]`).join('\n')}
+${placesWithLocation.map((p, i) => {
+      const coords = getPlaceCoordinates(p)
+      return coords ? `${i}: ${p.displayName?.text || p.displayName} [${coords.lat}, ${coords.lng}]` : null
+    }).filter(Boolean).join('\n')}
 
 ${distanceMatrixText}
 
@@ -498,7 +542,7 @@ ${historyText}
 
     // 4. Responding 단계 (최종 사용자 응답 - 2단계)
     // 계산된 경로 정보와 함께 최종 답변 생성 (설명만)
-    const contextPrompt = buildContextPrompt(currentLocation, savedPlaces, null, radius, minRating, 'planner')
+    const contextPrompt = buildContextPrompt(currentLocation, null, savedPlaces, null, radius, minRating, 'planner')
     const systemPrompt = getPlannerSystemPrompt(language, contextPrompt + detailedRouteInfo)
     
     console.log('[Planner] 2단계: 최종 답변 생성 요청 (설명)')
@@ -601,26 +645,11 @@ export const getChatResponseWithAgents = async (
 
   try {
     // 0. 위치 정보 주소 보강 (좌표는 있지만 주소가 없는 경우 역지오코딩 수행)
-    if (currentLocation && currentLocation.lat && currentLocation.lng && !currentLocation.address) {
-      try {
-        const addressInfo = await reverseGeocode(currentLocation.lat, currentLocation.lng, language)
-        if (addressInfo) {
-          currentLocation.address = addressInfo.formattedAddress
-        }
-      } catch (e) {
-        console.warn('Current Location Reverse Geocoding Failed:', e)
-      }
+    if (currentLocation) {
+      await enrichLocationWithAddress(currentLocation, language)
     }
-
-    if (mapCenter && mapCenter.lat && mapCenter.lng && !mapCenter.address) {
-      try {
-        const addressInfo = await reverseGeocode(mapCenter.lat, mapCenter.lng, language)
-        if (addressInfo) {
-          mapCenter.address = addressInfo.formattedAddress
-        }
-      } catch (e) {
-        console.warn('Map Center Reverse Geocoding Failed:', e)
-      }
+    if (mapCenter) {
+      await enrichLocationWithAddress(mapCenter, language)
     }
 
     // 1. Supervisor로 역할 선택

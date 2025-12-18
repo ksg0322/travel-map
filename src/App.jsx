@@ -9,7 +9,7 @@ import GoogleMap from './components/Map'
 import SearchResults from './components/SearchResults'
 import PlaceDetailModal from './components/PlaceDetailModal'
 import WelcomeModal from './components/WelcomeModal'
-import { searchLocationCoordinates, searchCategoryPlaces, searchPlaces, getPlaceDetails, geocodeAddress, reverseGeocode } from './services/placesApi'
+import { searchLocationCoordinates, searchCategoryPlaces, searchPlaces, getPlaceDetails, reverseGeocode } from './services/placesApi'
 
 // 데이터베이스 뷰 컴포넌트 (표 형태)
 const DatabaseView = ({ results, onClose, onRemove }) => {
@@ -187,31 +187,23 @@ function App() {
   const handleSelectPlace = async (place) => {
     if (!place) {
       setSelectedPlace(null)
+      setLastViewedPlace(null)
       return
     }
 
     console.log('📍 장소 선택됨:', place)
     
-    // 위치 정보 추출 시도
-    let lat, lng;
-    
-    if (place.location) {
-      lat = place.location.latitude || place.location.lat
-      lng = place.location.longitude || place.location.lng
-    }
-    
-    console.log('좌표 추출 결과:', { lat, lng })
-
-    if (lat && lng) {
-      // 지도 중심 상태 업데이트
-      const newCenter = { lat: Number(lat), lng: Number(lng) }
-      console.log('지도 중심 변경 요청:', newCenter)
-      setMapCenter(newCenter)
+    // 위치 정보 추출 및 지도 중심 이동
+    const coordinates = getPlaceCoordinates(place)
+    if (coordinates) {
+      console.log('지도 중심 변경 요청:', coordinates)
+      setMapCenter(coordinates)
     } else {
       console.warn('위치 정보가 유효하지 않아 지도를 이동할 수 없습니다.')
     }
 
     // 장소 ID가 있으면 상세 정보 가져오기
+    let finalPlace = place
     if (place.id) {
       try {
         console.log('상세 정보 가져오는 중...', place.id)
@@ -219,25 +211,16 @@ function App() {
         if (placeDetails) {
           console.log('✅ 상세 정보 로드 성공:', placeDetails)
           // 기존 place 정보와 상세 정보를 병합
-          const mergedPlace = { ...place, ...placeDetails }
-          setSelectedPlace(mergedPlace)
-          setLastViewedPlace(mergedPlace) // 마지막으로 상세보기를 한 장소로 설정
-        } else {
-          // 상세 정보가 없으면 기본 정보 사용
-          setSelectedPlace(place)
-          setLastViewedPlace(place) // 마지막으로 상세보기를 한 장소로 설정
+          finalPlace = { ...place, ...placeDetails }
         }
       } catch (error) {
         console.error('상세 정보 가져오기 실패:', error)
-        // 에러가 발생해도 기본 정보로 표시
-        setSelectedPlace(place)
-        setLastViewedPlace(place) // 마지막으로 상세보기를 한 장소로 설정
       }
-    } else {
-      // ID가 없으면 기본 정보만 사용
-      setSelectedPlace(place)
-      setLastViewedPlace(place) // 마지막으로 상세보기를 한 장소로 설정
     }
+    
+    // 최종 장소 정보 설정 (중복 제거)
+    setSelectedPlace(finalPlace)
+    setLastViewedPlace(finalPlace)
   }
 
   // 경로 업데이트 핸들러 (AIChat에서 호출)
@@ -349,6 +332,14 @@ function App() {
     }
   }, [])
 
+  // 좌표 추출 헬퍼 함수
+  const getPlaceCoordinates = (place) => {
+    if (!place?.location) return null
+    const lat = place.location.latitude || place.location.lat
+    const lng = place.location.longitude || place.location.lng
+    return (lat && lng) ? { lat: Number(lat), lng: Number(lng) } : null
+  }
+
   // 두 좌표 사이의 거리 계산 (미터 단위, 하버사인 공식)
   const calculateDistance = (lat1, lng1, lat2, lng2) => {
     const R = 6371000 // 지구 반경 (미터)
@@ -385,9 +376,7 @@ function App() {
       }
       
       const lowerQuery = query.trim().toLowerCase()
-      const isCategoryKeyword = categoryKeywords[lowerQuery] || 
-                                categoryKeywords[query.trim()] ||
-                                /^(식당|호텔|관광지|음식점|맛집|숙박|관광|명소|)$/i.test(query.trim())
+      const isCategoryKeyword = categoryKeywords[lowerQuery] || false
       
       // 1. 목적지 좌표 찾기
       let searchCenter = null
@@ -485,24 +474,16 @@ function App() {
 
       // 검색 반경 내의 장소만 필터링
       const placesWithinRadius = uniquePlaces.filter(place => {
-        if (!place.location || !searchCenter) return false
+        if (!searchCenter) return false
         
-        let placeLat, placeLng
-        if (place.location.latitude !== undefined) {
-          placeLat = place.location.latitude
-          placeLng = place.location.longitude
-        } else if (place.location.lat !== undefined) {
-          placeLat = place.location.lat
-          placeLng = place.location.lng
-        } else {
-          return false
-        }
+        const coordinates = getPlaceCoordinates(place)
+        if (!coordinates) return false
 
         const distance = calculateDistance(
           searchCenter.lat,
           searchCenter.lng,
-          placeLat,
-          placeLng
+          coordinates.lat,
+          coordinates.lng
         )
         
         // 거리 정보를 place 객체에 추가 (표시용)
@@ -518,27 +499,17 @@ function App() {
       if (isCategoryKeyword) {
         // 카테고리 키워드 검색일 때만 거리순 정렬 적용
         const currentCenter = mapCenter || currentLocation
-        if (currentCenter && currentCenter.lat && currentCenter.lng) {
+        if (currentCenter?.lat && currentCenter?.lng) {
           // 각 장소에 현재 지도 위치 기준 거리 계산 및 저장
           placesWithinRadius.forEach(place => {
-            if (!place.location) return
-            
-            let placeLat, placeLng
-            if (place.location.latitude !== undefined) {
-              placeLat = place.location.latitude
-              placeLng = place.location.longitude
-            } else if (place.location.lat !== undefined) {
-              placeLat = place.location.lat
-              placeLng = place.location.lng
-            } else {
-              return
-            }
+            const coordinates = getPlaceCoordinates(place)
+            if (!coordinates) return
             
             const distanceFromCenter = calculateDistance(
               currentCenter.lat,
               currentCenter.lng,
-              placeLat,
-              placeLng
+              coordinates.lat,
+              coordinates.lng
             )
             
             // 현재 지도 위치 기준 거리 저장
@@ -550,8 +521,8 @@ function App() {
             const distanceA = a.distanceFromCenter || Infinity
             const distanceB = b.distanceFromCenter || Infinity
             return distanceA - distanceB
-        })
-      }
+          })
+        }
       }
 
       console.log('통합 검색 결과 (반경 필터링 후):', finalResults)
@@ -641,7 +612,7 @@ function App() {
         <div className="map-container">
             {/* 상단 컨트롤 컨테이너 (검색바 + 필터) */}
             <div className="top-controls-container">
-              <SearchBar language={language} onSearch={handleSearch} currentLocation={mapCenter || currentLocation} />
+              <SearchBar onSearch={handleSearch} />
           
               {/* 경로 삭제 버튼 (경로가 있을 때만 표시) */}
               {routePaths && routePaths.length > 0 && (

@@ -69,7 +69,14 @@
     "phone": "電話番号",
     "website": "ウェブサイト",
     "delete": "削除",
-    "deleteConfirm": "この場所を削除しますか？"
+    "deleteConfirm": "この場所を削除しますか？",
+    "price": {
+      "free": "無料",
+      "inexpensive": "安い",
+      "moderate": "普通",
+      "expensive": "高い",
+      "veryExpensive": "非常に高い"
+    }
   },
   "database": {
     "type": "タイプ",

@@ -273,40 +273,19 @@ const AIChat = ({
 
       <div className="chat-header">
         <h3 className="chat-title">{t('chat.title')}</h3>
-        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+        <div className="chat-header-actions">
           {messages.length > 0 && (
             <button 
               className="chat-clear-button" 
               onClick={handleClearHistory} 
-              title={t.clear}
-              style={{
-                width: '32px',
-                height: '32px',
-                border: 'none',
-                background: 'transparent',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: '#5f6368',
-                borderRadius: '50%',
-                transition: 'all 0.2s'
-              }}
-              onMouseEnter={(e) => {
-                e.target.style.backgroundColor = '#f1f3f4'
-                e.target.style.color = '#202124'
-              }}
-              onMouseLeave={(e) => {
-                e.target.style.backgroundColor = 'transparent'
-                e.target.style.color = '#5f6368'
-              }}
+              title={t('chat.clear')}
             >
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M3 6H5H21M8 6V4C8 3.46957 8.21071 2.96086 8.58579 2.58579C8.96086 2.21071 9.46957 2 10 2H14C14.5304 2 15.0391 2.21071 15.4142 2.58579C15.7893 2.96086 16 3.46957 16 4V6M19 6V20C19 20.5304 18.7893 21.0391 18.4142 21.4142C18.0391 21.7893 17.5304 22 17 22H7C6.46957 22 5.96086 21.7893 5.58579 21.4142C5.21071 21.0391 5 20.5304 5 20V6H19Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
             </button>
           )}
-          <button className="chat-close-button" onClick={onClose} title={t.close}>
+          <button className="chat-close-button" onClick={onClose} title={t('chat.close')}>
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
@@ -320,7 +299,7 @@ const AIChat = ({
             <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M21 15C21 15.5304 20.7893 16.0391 20.4142 16.4142C20.0391 16.7893 19.5304 17 19 17H7L3 21V5C3 4.46957 3.21071 3.96086 3.58579 3.58579C3.96086 3.21071 4.46957 3 5 3H19C19.5304 3 20.0391 3.21071 20.4142 3.58579C20.7893 3.96086 21 4.46957 21 5V15Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
-            <p style={{ whiteSpace: 'pre-line', textAlign: 'center' }}>{t('chat.welcome')}</p>
+            <p className="chat-welcome-text">{t('chat.welcome')}</p>
             {searchResults && searchResults.length > 0 && (
               <p className="chat-hint">{t('chat.hint', { count: searchResults.length })}</p>
             )}
@@ -354,7 +333,7 @@ const AIChat = ({
         <input
           type="text"
           className="chat-input"
-          placeholder={t.placeholder}
+          placeholder={t('chat.placeholder')}
           value={inputValue}
           onChange={(e) => setInputValue(e.target.value)}
         />

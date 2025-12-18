@@ -69,7 +69,14 @@
     "phone": "전화번호",
     "website": "웹사이트",
     "delete": "삭제",
-    "deleteConfirm": "이 장소를 삭제하시겠습니까?"
+    "deleteConfirm": "이 장소를 삭제하시겠습니까?",
+    "price": {
+      "free": "무료",
+      "inexpensive": "저렴함",
+      "moderate": "보통",
+      "expensive": "비쌈",
+      "veryExpensive": "매우 비쌈"
+    }
   },
   "database": {
     "type": "유형",
