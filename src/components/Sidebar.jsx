@@ -88,6 +88,8 @@ const Sidebar = ({
 
         <div className="sidebar-divider"></div>
 
+        <div style={{ height: '20px' }}></div>
+
         <div className="sidebar-actions">
         {/* 채팅 버튼 */}
         <button 

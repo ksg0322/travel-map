@@ -23,7 +23,7 @@
 }
 
 .sidebar-header h3 {
-  margin: 0;
+  margin: 10px 0 0 0;
   font-size: 30px;
   text-align: center;
   color: #d86262;
@@ -37,7 +37,7 @@
 
 .sidebar-section h4 {
   margin: 0 0 0 0;
-  font-size: 14px;
+  font-size: 15px;
   color: #d86262;
 }
 
@@ -100,9 +100,9 @@
 
 .welcome-button {
   margin-top: auto; /* 하단으로 밀기 */
-  background-color: #FFF3CD; /* Warm Yellow */
+  background-color: #ffc2b2; 
   border-color: #FFB7B7; /* Light Coral */
-  color: #FF6B6B; /* Coral */
+  color: #d86262;
 }
 
 .welcome-button:hover {
