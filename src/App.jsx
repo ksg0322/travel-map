@@ -379,20 +379,8 @@ function App() {
       const isCategoryKeyword = categoryKeywords[lowerQuery] || false
       
       // 1. 목적지 좌표 찾기
-      let searchCenter = null
-      
-      // 카테고리 키워드인 경우: 사용자가 보고있는 지도의 중심(mapCenter)에서 검색
-      if (isCategoryKeyword) {
-        searchCenter = mapCenter || currentLocation // 지도 중심 우선, 없으면 현재 위치
-      } else {
-        // 일반 키워드인 경우: 검색어의 좌표를 찾고, 없으면 지도 중심 또는 현재 위치
-        const location = await searchLocationCoordinates(query)
-        if (location) {
-          searchCenter = { lat: location.latitude, lng: location.longitude }
-        } else {
-          searchCenter = mapCenter || currentLocation
-        }
-      }
+      // 모든 검색은 사용자가 보고있는 지도의 중심(mapCenter)을 기준으로 검색
+      const searchCenter = mapCenter || currentLocation // 지도 중심 우선, 없으면 현재 위치
 
       if (!searchCenter) {
         alert(t('search.error.locationNotFound'))
@@ -418,7 +406,7 @@ function App() {
           allPlaces = tourist_attractions
         }
       } else {
-        // 일반 키워드인 경우 searchPlaces만 호출 (API 호출 최적화: 4번 → 1번)
+        // 일반 키워드인 경우 searchPlaces만 호출
         const generalPlaces = await searchPlaces(query, searchCenter, language, radius)
 
         // 일반 검색 결과 처리: 타입이 지정되지 않았으므로 API 데이터를 기반으로 추론하거나 'Place'로 설정
@@ -494,7 +482,6 @@ function App() {
 
       console.log(`검색 결과: 전체 ${uniquePlaces.length}개, 반경 내 ${placesWithinRadius.length}개`)
 
-      // 카테고리 키워드 검색일 때만 현재 지도 위치 기준으로 거리 계산 및 정렬
       let finalResults = placesWithinRadius
       if (isCategoryKeyword) {
         // 카테고리 키워드 검색일 때만 거리순 정렬 적용
