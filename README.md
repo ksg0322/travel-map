@@ -14,7 +14,7 @@ Google API를 활용하여 장소를 검색하고 사용자 맞춤형 여행 경
 - **정렬 기능**: 거리순, 평점순 등으로 검색 결과를 정렬하여 볼 수 있습니다.
 
 ### 2. 🤖 AI 여행 에이전트
-- **Role-Based AI**: Supervisor, Planner, Communicator, Search Agent 등 역할이 분담된 AI 시스템이 유기적으로 동작합니다.
+- **Supervisor**: 사용자의 메시지를 분석하여 (Planner, Communicator, Search Agent) AI를 선택합니다.
 - **여행 경로 계획 (Planner)**:
   - 저장된 장소와 현재 위치를 기반으로 최적의 방문 순서를 제안합니다.
   - 여행 기간(예: 1일, 2박 3일)이나 출발지를 고려하여 동선을 짭니다.
